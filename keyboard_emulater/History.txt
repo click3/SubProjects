@@ -1,0 +1,7 @@
+2009/10/04	ver1.01
+vkEvent、dikEvent、eventクラスメソッドにバリエーションを追加
+sample追加
+Readmeの工事中を埋めた
+
+2009/11/02	ver1.00
+とりあえず試作
