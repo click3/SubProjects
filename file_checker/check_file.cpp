@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <map>
 #include <string>
 #include <stdio.h>
@@ -9,6 +10,39 @@
 #pragma comment(lib, "Shlwapi.lib")
 
 using namespace boost::assign;
+
+#undef GetModuleFileName
+bool GetModuleFileName(std::vector<char> &str) {
+	::SetLastError(ERROR_SUCCESS);
+	unsigned int size = 256;
+	while(true) {
+		str.resize(size);
+		const unsigned int length = ::GetModuleFileNameA(NULL, &str.front(), str.size());
+		const DWORD error = ::GetLastError();
+		if(error == ERROR_SUCCESS && length <= size) {
+			if(length < size) {
+				str.resize(length);
+			}
+			break;
+		} else if(error == ERROR_INSUFFICIENT_BUFFER) {
+			size *= 2;
+			continue;
+		} else {
+			str.clear();
+			return false;
+		}
+	}
+	return true;
+}
+
+void GetAppDir(std::vector<char> &str) {
+	const bool get_result = GetModuleFileName(str);
+	BOOST_ASSERT(get_result);
+	BOOST_ASSERT(!str.empty());
+	const BOOL path_remove_result = ::PathRemoveFileSpec(&str.front());
+	BOOST_ASSERT(path_remove_result == TRUE);
+	str.resize(::strlen(&str.front()) + 1);
+}
 
 bool CheckFile(const char *filename) {
 	const std::map<std::string, const char *> ext_list = map_list_of
@@ -25,10 +59,13 @@ bool CheckFile(const char *filename) {
 	::ZeroMemory(&pi, sizeof(pi));
 	si.cb = sizeof(si);
 
+	std::vector<char> dir;
+	GetAppDir(dir);
 	char command_line[256];
-	::sprintf_s(command_line, sizeof(command_line), "%s %s", it->second, filename);
+	::sprintf_s(command_line, sizeof(command_line), "%s/%s %s", &dir.front(), it->second, filename);
 
 	if(0 == ::CreateProcess(NULL, command_line, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		std::cout << command_line << "‚ÉŽ¸”s‚µ‚Ü‚µ‚½B" << std::endl;
 		return false;
 	}
 
@@ -38,8 +75,10 @@ bool CheckFile(const char *filename) {
 	::CloseHandle(pi.hThread);
 	::CloseHandle(pi.hProcess);
 	if(result == 0 || exit_code != 0) {
+		std::cout << it->second << "‚ªŽ¸”s‚µ‚Ü‚µ‚½B" << std::endl;
 		return false;
 	}
+	printf("%s OK\n", command_line);
 	return true;
 }
 
@@ -58,6 +97,7 @@ bool ProcFile(const char *filename) {
 	const HANDLE find_handle = ::FindFirstFile("*", &fd);
 	if(find_handle == INVALID_HANDLE_VALUE) {
 		::SetCurrentDirectory(dir);
+		printf("FindFirstFile‚ÉŽ¸”s‚µ‚Ü‚µ‚½B\n");
 		return false;
 	}
 	bool result = true;
@@ -68,15 +108,16 @@ bool ProcFile(const char *filename) {
 				break;
 			}
 		}
-		if(0 != ::FindNextFile(find_handle, &fd)) {
+		if(0 == ::FindNextFile(find_handle, &fd)) {
 			if(ERROR_NO_MORE_FILES != ::GetLastError()) {
+				printf("FindNextFile‚ÉŽ¸”s‚µ‚Ü‚µ‚½B\n");
 				result = false;
 			}
 			break;
 		}
 	}
 	::FindClose(find_handle);
-		::SetCurrentDirectory(dir);
+	::SetCurrentDirectory(dir);
 	return result;
 }
 
