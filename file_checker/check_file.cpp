@@ -62,7 +62,7 @@ bool CheckFile(const char *filename) {
 	std::vector<char> dir;
 	GetAppDir(dir);
 	char command_line[256];
-	::sprintf_s(command_line, sizeof(command_line), "%s/%s %s", &dir.front(), it->second, filename);
+	::sprintf_s(command_line, sizeof(command_line), "%s\\%s %s", &dir.front(), it->second, filename);
 
 	if(0 == ::CreateProcess(NULL, command_line, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
 		std::cout << command_line << "‚ÉŽ¸”s‚µ‚Ü‚µ‚½B" << std::endl;
@@ -78,7 +78,10 @@ bool CheckFile(const char *filename) {
 		std::cout << it->second << "‚ªŽ¸”s‚µ‚Ü‚µ‚½B" << std::endl;
 		return false;
 	}
-	printf("%s OK\n", command_line);
+
+	char cur_dir[256];
+	::GetCurrentDirectory(sizeof(cur_dir), cur_dir);
+	printf("%s\\%s OK\n", cur_dir, filename);
 	return true;
 }
 
