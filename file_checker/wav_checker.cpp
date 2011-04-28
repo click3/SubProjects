@@ -57,7 +57,22 @@ bool WavCheck(std::string &error_message, const char *filename) {
 		if(::strncmp("data", chunk_name, sizeof(chunk_name)) == 0) {
 			data_found = true;
 		}
-		in.seekg(chunk_length, std::ios::cur);
+		if(::strncmp("LIST", chunk_name, sizeof(chunk_name)) == 0) {
+			char list_type[4];
+			READ(list_type, sizeof(list_type));
+			for(unsigned int i = 0; i < sizeof(list_type); i++) {
+				if(::isprint(list_type[i]) == 0) {
+					error_message = "LISTチャンクのフォームタイプ名が不正です。";
+					return false;
+				}
+			}
+			in.seekg(chunk_length - 4, std::ios::cur);
+		} else {
+			in.seekg(chunk_length, std::ios::cur);
+		}
+		if(chunk_length%2 == 1) {
+			in.seekg(1, std::ios::cur);
+		}
 	}
 	if(!data_found) {
 		error_message = "dataチャンクが存在していません。";
