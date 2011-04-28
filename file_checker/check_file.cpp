@@ -51,18 +51,22 @@ bool ProcFile(const char *filename) {
 		return true;
 	}
 
-	char search_filename[256];
-	::sprintf_s(search_filename, sizeof(search_filename), "%s\\*", filename);
+	char dir[256];
+	::GetCurrentDirectory(sizeof(dir), dir);
+	::SetCurrentDirectory(filename);
 	WIN32_FIND_DATA fd;
-	const HANDLE find_handle = ::FindFirstFile(search_filename, &fd);
+	const HANDLE find_handle = ::FindFirstFile("*", &fd);
 	if(find_handle == INVALID_HANDLE_VALUE) {
+		::SetCurrentDirectory(dir);
 		return false;
 	}
 	bool result = true;
 	while(true) {
-		if(!::ProcFile(fd.cFileName)) {
-			result = false;
-			break;
+		if(fd.cFileName[0] != '.') {
+			if(!::ProcFile(fd.cFileName)) {
+				result = false;
+				break;
+			}
 		}
 		if(0 != ::FindNextFile(find_handle, &fd)) {
 			if(ERROR_NO_MORE_FILES != ::GetLastError()) {
@@ -72,6 +76,7 @@ bool ProcFile(const char *filename) {
 		}
 	}
 	::FindClose(find_handle);
+		::SetCurrentDirectory(dir);
 	return result;
 }
 
