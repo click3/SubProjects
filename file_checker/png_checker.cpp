@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <ctype.h>
+#include <windows.h>
 
 #include "boost/assign.hpp"
 #include "boost/crc.hpp"
@@ -15,7 +16,11 @@ using namespace boost::integer;
 bool PngCheck(std::string &error_message, const char *filename) {
 	std::ifstream in(filename, std::ios::binary);
 	if(!in.is_open()) {
-		error_message = "ファイルオープンに失敗しました。";
+		char dir[256];
+		::GetCurrentDirectory(sizeof(dir), dir);
+		char message[256];
+		::sprintf_s(message, sizeof(message), "ファイルオープンに失敗しました(%s\\%s)", dir, filename);
+		error_message = message;
 		return false;
 	}
 	in.seekg(0, std::ios::end);
