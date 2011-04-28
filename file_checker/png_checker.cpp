@@ -12,7 +12,7 @@
 using namespace boost::assign;
 using namespace boost::integer;
 
-bool WavCheck(std::string &error_message, const char *filename) {
+bool PngCheck(std::string &error_message, const char *filename) {
 	std::ifstream in(filename, std::ios::binary);
 	if(!in.is_open()) {
 		error_message = "ファイルオープンに失敗しました。";
@@ -145,7 +145,7 @@ int main(unsigned int argc, const char * const *argv) {
 	bool result = true;
 	for(unsigned int i = 1; result && i < argc; i++) {
 		std::string error_message;
-		result = WavCheck(error_message, argv[i]);
+		result = PngCheck(error_message, argv[i]);
 		if(!result) {
 			printf("%s\n", error_message.c_str());
 		}
