@@ -70,6 +70,9 @@ bool WavCheck(std::string &error_message, const char *filename) {
 		} else {
 			in.seekg(chunk_length, std::ios::cur);
 		}
+		if(static_cast<unsigned int>(in.tellg()) == file_size) {
+			break;
+		}
 		if(chunk_length%2 == 1) {
 			in.seekg(1, std::ios::cur);
 		}
