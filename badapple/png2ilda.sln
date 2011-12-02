@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "png2ilda", "png2ilda\png2ilda.vcxproj", "{DFF47592-7A70-4D51-8382-DF95190C7F2F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DFF47592-7A70-4D51-8382-DF95190C7F2F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DFF47592-7A70-4D51-8382-DF95190C7F2F}.Debug|Win32.Build.0 = Debug|Win32
+		{DFF47592-7A70-4D51-8382-DF95190C7F2F}.Release|Win32.ActiveCfg = Release|Win32
+		{DFF47592-7A70-4D51-8382-DF95190C7F2F}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
