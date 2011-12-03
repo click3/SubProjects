@@ -1,11 +1,3 @@
 
 *.obj
-/badapple/Debug
-/badapple/png2ilda.sdf
-/badapple/png2ilda.suo
-/badapple/png2ilda/Debug
-/badapple/Release
-/badapple/png2ilda/Release
-/badapple/png2ilda.opensdf
-/badapple/png2ilda/png2ilda.vcxproj.user
 /ILDA_Player/obj

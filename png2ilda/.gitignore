@@ -1,0 +1,11 @@
+
+*.ild
+Debug
+png2ilda.sdf
+png2ilda.suo
+png2ilda/Debug
+Release
+png2ilda/Release
+png2ilda.opensdf
+png2ilda/png2ilda.vcxproj.user
+ipch
