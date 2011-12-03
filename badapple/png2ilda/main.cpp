@@ -12,13 +12,11 @@
 #include <libpng.h>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
+#include <boost/assert.hpp>
 
 unsigned int g_points_max;
 unsigned int g_distance_max;
 unsigned int g_line_max;
-
-
-#define ASSERT(a) if(!(a)){printf("ASSERT %s:%d\n%s\n",__FILE__ ,__LINE__,#a);getchar();}
 
 class BinWriter {
 protected:
@@ -135,8 +133,8 @@ public:
 	}
 
 	void seek(unsigned int x, unsigned int y) {
-		ASSERT(x < 512);
-		ASSERT(y < 384);
+		BOOST_ASSERT(x < 512);
+		BOOST_ASSERT(y < 384);
 		current.x = x;
 		current.y = y;
 	}
@@ -224,7 +222,7 @@ public:
 				break;
 			}
 		}
-		ASSERT(temp_prev != 8);
+		BOOST_ASSERT(temp_prev != 8);
 		begin_impl(3);
 		prev_dir = temp_prev;
 	}
@@ -246,7 +244,7 @@ public:
 			result = (result + 7) % 8;
 		}
 		result = (result + 1) % 8;
-		//ASSERT(is_wall(result) || equal_nextColor(result));
+		//BOOST_ASSERT(is_wall(result) || equal_nextColor(result));
 		if(!is_wall(result) && !equal_nextColor(result)) {
 			return get_outDir(dir);
 		}
@@ -332,15 +330,15 @@ protected:
 	bool loop_point;
 
 	void move() {
-		ASSERT(current.y != 0 || dirList[dir][0] >= 0);
-		ASSERT(current.x != 0 || dirList[dir][1] >= 0);
+		BOOST_ASSERT(current.y != 0 || dirList[dir][0] >= 0);
+		BOOST_ASSERT(current.x != 0 || dirList[dir][1] >= 0);
 		current.y += dirList[dir][0];
 		current.x += dirList[dir][1];
 		if(current == begin_point) {
 			loop_point = true;
 		}
-		ASSERT(current.x < 512);
-		ASSERT(current.y < 384);
+		BOOST_ASSERT(current.x < 512);
+		BOOST_ASSERT(current.y < 384);
 	}
 
 	void begin_impl(unsigned int start) {
@@ -351,22 +349,22 @@ protected:
 		for(unsigned int i = 0; i < 8; i++) {
 			if(equal_nextColor((start + i)%8)) {
 				dir = (start + i) % 8;
-				ASSERT(!is_wall());
+				BOOST_ASSERT(!is_wall());
 				move();
 				return;
 			}
 		}
-		ASSERT(is_line());
+		BOOST_ASSERT(is_line());
 	}
 };
 
 bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w,struct line **_lineData,struct line **_first,struct line **_last) {
-	ASSERT(h < height);
-	ASSERT(w < width);
-	ASSERT(data != NULL);
-	ASSERT(_lineData != NULL);
-	ASSERT(_first != NULL);
-	ASSERT(_last != NULL);
+	BOOST_ASSERT(h < height);
+	BOOST_ASSERT(w < width);
+	BOOST_ASSERT(data != NULL);
+	BOOST_ASSERT(_lineData != NULL);
+	BOOST_ASSERT(_first != NULL);
+	BOOST_ASSERT(_last != NULL);
 	const int dirList[2][8][2] = {
 		{
 			{+1,-1},	{+1, 0},	{+1,+1},
@@ -383,10 +381,10 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 	OutLiner img(width, height, data);
 	img.setDirConfig(dirList[0]);
 	img.seek(w, h);
-//	ASSERT(!img.equal_nextColor(4));
-//	ASSERT(!img.equal_nextColor(5));
-//	ASSERT(!img.equal_nextColor(6));
-//	ASSERT(!img.equal_nextColor(7));
+//	BOOST_ASSERT(!img.equal_nextColor(4));
+//	BOOST_ASSERT(!img.equal_nextColor(5));
+//	BOOST_ASSERT(!img.equal_nextColor(6));
+//	BOOST_ASSERT(!img.equal_nextColor(7));
 
 	if(!img.is_line()) {
 		img.set_zumi();
@@ -415,7 +413,7 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 		while(img.next()) {
 //printf("begin %3d:%3d(%d)\n",img.current.x,img.current.y,img.dir);
 			if(prev_dir != img.dir) {
-				ASSERT(last->next == NULL);
+				BOOST_ASSERT(last->next == NULL);
 				last->next = top;
 				top++;
 				last->next->prev = last;
@@ -427,10 +425,10 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 			last->x2 = img.current.x;
 			last->y2 = img.current.y;
 			prev_dir = img.dir;
-			ASSERT(last->x1 < 512);
-			ASSERT(last->y1 < 384);
-			ASSERT(last->x2 < 512);
-			ASSERT(last->y2 < 384);
+			BOOST_ASSERT(last->x1 < 512);
+			BOOST_ASSERT(last->y1 < 384);
+			BOOST_ASSERT(last->x2 < 512);
+			BOOST_ASSERT(last->y2 < 384);
 		}
 	}
 
@@ -439,7 +437,7 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 	if(img.is_prev()) {
 		img.prev_begin();
 		if(begin_call) {
-			ASSERT(first->prev == NULL);
+			BOOST_ASSERT(first->prev == NULL);
 			first->prev = top;
 			top++;
 			first->prev->next = first;
@@ -460,7 +458,7 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 		while(img.next()) {
 //printf("prev %3d:%3d(%d)\n",img.current.x,img.current.y,img.dir);
 			if(prev_dir != img.dir) {
-				ASSERT(first->prev == NULL);
+				BOOST_ASSERT(first->prev == NULL);
 				first->prev = top;
 				top++;
 				first->prev->next = first;
@@ -472,13 +470,13 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 			first->x1 = img.current.x;
 			first->y1 = img.current.y;
 			prev_dir = img.dir;
-			ASSERT(first->x1 < 512);
-			ASSERT(first->y1 < 384);
-			ASSERT(first->x2 < 512);
-			ASSERT(first->y2 < 384);
+			BOOST_ASSERT(first->x1 < 512);
+			BOOST_ASSERT(first->y1 < 384);
+			BOOST_ASSERT(first->x2 < 512);
+			BOOST_ASSERT(first->y2 < 384);
 		}
 	}
-	ASSERT(first != NULL || last != NULL);
+	BOOST_ASSERT(first != NULL || last != NULL);
 
 //getchar();
 	*_lineData = lineData;
@@ -504,10 +502,10 @@ public:
 	unsigned char getColorID() const {
 		const int result = (this->y + 32768 - 8192) / 8193 + 2;
 		//const int result = (this->x + 32768) / 10923 + 2;
-		ASSERT(result > 0 && result <= 7);
+		BOOST_ASSERT(result > 0 && result <= 7);
 		switch(result){
 		case 0:
-			ASSERT(false);
+			BOOST_ASSERT(false);
 			break;
 		case 1:
 			return 0x38;
@@ -524,7 +522,7 @@ public:
 		case 7:
 			return 0x30;
 		default:
-			ASSERT(false);
+			BOOST_ASSERT(false);
 			break;
 		}
 		return result;
@@ -575,8 +573,8 @@ bool DecPoint(std::list<point> &points, unsigned int n){
 }
 
 bool Line2Points(std::list<point> &points, int count, struct line **first) {
-	ASSERT(count >= 0);
-	ASSERT(first != NULL);
+	BOOST_ASSERT(count >= 0);
+	BOOST_ASSERT(first != NULL);
 	unsigned int point_num = 2; // 始点 + 終点の分
 	for(int i = 0; i < count; i++) {
 		struct line *p = first[i];
@@ -598,16 +596,16 @@ bool Line2Points(std::list<point> &points, int count, struct line **first) {
 	for(int i = 0; i < count; i++) {
 		struct line *p = first[i];
 		if(p != NULL) {
-			ASSERT(p->x1 < 512);
-			ASSERT(p->y1 < 384);
+			BOOST_ASSERT(p->x1 < 512);
+			BOOST_ASSERT(p->y1 < 384);
 			pos->x = ILDA_X(p->x1);
 			pos->y = ILDA_Y(p->y1);
 			pos->light = LIGHT_OFF;
 			++pos;
 		}
 		while(p != NULL) {
-			ASSERT(p->x2 < 512);
-			ASSERT(p->y2 < 384);
+			BOOST_ASSERT(p->x2 < 512);
+			BOOST_ASSERT(p->y2 < 384);
 			pos->x = ILDA_X(p->x2);
 			pos->y = ILDA_Y(p->y2);
 			pos->light = LIGHT_ON;
@@ -619,7 +617,7 @@ bool Line2Points(std::list<point> &points, int count, struct line **first) {
 	pos->y = ILDA_Y(192);
 	pos->light = LIGHT_OFF;
 	++pos;
-	ASSERT(pos == points.end());
+	BOOST_ASSERT(pos == points.end());
 	return true;
 }
 
@@ -650,12 +648,12 @@ bool WriteFrame(std::list<point> &points, const unsigned short frameNum, const u
 		if(abs(p->x - prev->x) > g_distance_max) {
 			printf("\n%d\n",abs(p->x - prev->x));
 			printf("%d:%d => %d:%d\n",prev->x,prev->y,p->x,p->y);
-			ASSERT(abs(p->x - prev->x) <= g_distance_max);
+			BOOST_ASSERT(abs(p->x - prev->x) <= g_distance_max);
 		}
 		if(abs(p->y - prev->y) > g_distance_max) {
 			printf("\n%d\n",abs(p->y - prev->y));
 			printf("%d:%d => %d:%d\n",prev->x,prev->y,p->x,p->y);
-			ASSERT(abs(p->y - prev->y) <= g_distance_max);
+			BOOST_ASSERT(abs(p->y - prev->y) <= g_distance_max);
 		}
 		prev = p;
 		++p;
@@ -798,7 +796,7 @@ bool isIgnoreColor(const unsigned char index) {
 		{255,	64,	64},
 		{255,	32,	32}
 	};
-	ASSERT(index < 64);
+	BOOST_ASSERT(index < 64);
 	const unsigned char * const first = &colorList[index][0];
 	const unsigned char * const end = &colorList[index][3];
 	if(std::accumulate(first, end, 0) < 255) {
@@ -813,17 +811,16 @@ void Line2Ilda(FILE *fp, int count, struct line **first, struct line **last) {
 
 	std::list<point> points;
 	do {
-		ASSERT(SortLines(count, first, last));
+		BOOST_ASSERT(SortLines(count, first, last));
 
-		ASSERT(Line2Points(points, count, first));
-//printf("points.size() == %d\n",points.size());
+		BOOST_ASSERT(Line2Points(points, count, first));
 
 		for(unsigned int n = 0; n == 0 || (points.size() > g_points_max && n < g_distance_max / 128); n++){
-			ASSERT(DecPoint(points, n));
-			ASSERT(SplitPoint(points, g_distance_max));
+			BOOST_ASSERT(DecPoint(points, n));
+			BOOST_ASSERT(SplitPoint(points, g_distance_max));
 		}
 	} while(!WriteFrame(points, frameNum, totalFrameNum, fp) && DecLine(count, first, last));
-	ASSERT(points.size() <= g_points_max);
+	BOOST_ASSERT(points.size() <= g_points_max);
 	frameNum++;
 
 	if(frameNum+2 == totalFrameNum){
@@ -872,7 +869,7 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 				color = p(h,w)[-1];
 			}
 		}
-		ASSERT(color != zumi);
+		BOOST_ASSERT(color != zumi);
 		while(w < width){
 			if(*p(h,w) != color){
 				if(*p(h,w) == zumi){
@@ -880,7 +877,7 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 						color = *p(h,w+1);
 					}
 				} else {
-					ASSERT(lineCount < g_line_max);
+					BOOST_ASSERT(lineCount < g_line_max);
 					if(OutLineStart(height,width,data,h,w,&lineData[lineCount],&first[lineCount],&last[lineCount])){
 						lineCount++;
 						if(w+1 < width && *p(h,w+1) != zumi) {
@@ -997,7 +994,7 @@ int main(int argc, char *argv[]){
 
 	const std::string ilda_filename = opt_list["out"].as<std::string>();
 	const std::string dir_name = opt_list["input-dir"].as<std::string>();
-	ASSERT(!ilda_filename.empty());
+	BOOST_ASSERT(!ilda_filename.empty());
 	FILE *fp = fopen(ilda_filename.c_str(),"wb");
 
 	int i = 1;
