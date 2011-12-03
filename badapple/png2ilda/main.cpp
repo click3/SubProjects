@@ -19,41 +19,71 @@ unsigned int g_line_max;
 
 #define ASSERT(a) if(!(a)){printf("ASSERT %s:%d\n%s\n",__FILE__ ,__LINE__,#a);getchar();}
 
-
-void put32bit(char *data, int n){
-	data[0] = ((char*)&n)[3];
-	data[1] = ((char*)&n)[2];
-	data[2] = ((char*)&n)[1];
-	data[3] = ((char*)&n)[0];
-}
-void put32bit(char *data, unsigned int n){
-	put32bit(data, *(int*)&n);
-}
-void put16bit(char *data, short n){
-	data[0] = ((char*)&n)[1];
-	data[1] = ((char*)&n)[0];
-}
-void put16bit(char *data, unsigned short n){
-	put16bit(data, *(short*)&n);
-}
-void put16bit(char *data, int n){
-	put16bit(data, *(short*)&n);
-}
-void put16bit(char *data, unsigned int n){
-	put16bit(data, *(short*)&n);
-}
-void put8bit(char *data, char n){
-	*data = n;
-}
-void put8bit(char *data, unsigned char n){
-	put8bit(data, *(char*)&n);
-}
-void put8bit(char *data, int n){
-	put8bit(data, *(char*)&n);
-}
-void put8bit(char *data, unsigned int n){
-	put8bit(data, *(char*)&n);
-}
+class BinWriter {
+protected:
+	std::vector<unsigned char> data;
+	unsigned int pos;
+public:
+	BinWriter(const unsigned int length) {
+		data.resize(length);
+		pos = 0;
+	}
+	void Put32(const int value) {
+		data[pos + 0] = reinterpret_cast<const unsigned char*>(&value)[3];
+		data[pos + 1] = reinterpret_cast<const unsigned char*>(&value)[2];
+		data[pos + 2] = reinterpret_cast<const unsigned char*>(&value)[1];
+		data[pos + 3] = reinterpret_cast<const unsigned char*>(&value)[0];
+		pos += 4;
+	}
+	void Put32(const unsigned int value) {
+		Put32(*reinterpret_cast<const int *>(&value));
+	}
+	void Put16(const short value) {
+		data[pos + 0] = reinterpret_cast<const unsigned char*>(&value)[1];
+		data[pos + 1] = reinterpret_cast<const unsigned char*>(&value)[0];
+		pos += 2;
+	}
+	void Put16(const unsigned short value) {
+		Put16(*reinterpret_cast<const short *>(&value));
+	}
+	void Put16(const int value) {
+		Put16(*reinterpret_cast<const short *>(&value));
+	}
+	void Put16(const unsigned int value) {
+		Put16(*reinterpret_cast<const short *>(&value));
+	}
+	void Put8(const char value) {
+		data[pos] = value;
+		pos++;
+	}
+	void Put8(const unsigned char value) {
+		Put8(*reinterpret_cast<const char *>(&value));
+	}
+	void Put8(const int value) {
+		Put8(*reinterpret_cast<const char *>(&value));
+	}
+	void Put8(const unsigned int value) {
+		Put8(*reinterpret_cast<const char *>(&value));
+	}
+	void Put(const char value, const unsigned int length) {
+		::memset(&data[pos], value, length);
+		pos += length;
+	}
+	void Put(const char *value, const unsigned int length) {
+		::memcpy(&data[pos], value, length);
+		pos += length;
+	}
+	void Put(const unsigned char *value, const unsigned int length) {
+		::memcpy(&data[pos], value, length);
+		pos += length;
+	}
+	void Seek(const unsigned int pos) {
+		this->pos = pos;
+	}
+	void FWrite(FILE * const fp) {
+		::fwrite(&data[0], 1, data.size(), fp);
+	}
+};
 
 
 
@@ -596,26 +626,26 @@ bool WriteFrame(std::list<point> &points, const unsigned short frameNum, const u
 	if(points.size() > g_points_max) {
 		return false;
 	}
-	char head[32];
-	strcpy(head,"ILDA");
-	put32bit(&head[4],1);
-	memset(&head[8],0x20,16);
-	put16bit(&head[24], points.size());
-	put16bit(&head[26], frameNum);
-	put16bit(&head[28], totalFrameNum);
-	head[30] = 0;
-	head[31] = 0;
-	fwrite(head,1,32,fp);
+	BinWriter head(32);
+	head.Put("ILDA", 4);
+	head.Put32(1);
+	head.Put(' ',  16); // => ' ' * 8 * 2
+	head.Put16(points.size());
+	head.Put16(frameNum);
+	head.Put16(totalFrameNum);
+	head.Put8(0);
+	head.Put8(0);
+	head.FWrite(fp);
 
 	std::list<point>::iterator p = points.begin();
 	std::list<point>::iterator prev = p;
 	while(p != points.end()){
-		char data[6];
-		put16bit(&data[0], p->x);
-		put16bit(&data[2], p->y);
-		data[4] = (p->light ? 0 : 0x40);
-		data[5] = (p->light ?  p->getColorID() : 0);
-		fwrite(data,1,6,fp);
+		BinWriter data(6);
+		data.Put16(p->x);
+		data.Put16(p->y);
+		data.Put8(p->light ? 0 : 0x40);
+		data.Put8(p->getColorID());
+		data.FWrite(fp);
 		if(abs(p->x - prev->x) > g_distance_max) {
 			printf("\n%d\n",abs(p->x - prev->x));
 			printf("%d:%d => %d:%d\n",prev->x,prev->y,p->x,p->y);
@@ -796,25 +826,26 @@ void Line2Ilda(FILE *fp, int count, struct line **first, struct line **last) {
 	frameNum++;
 
 	if(frameNum+2 == totalFrameNum){
-		char head[38];
-		strcpy(head,"ILDA");
-		put32bit(&head[4],1);
-		memset(&head[8],0x20,16);
-		put16bit(&head[24],1);
-		put16bit(&head[26],frameNum);
+		BinWriter head(38);
+		head.Put("ILDA", 4);
+		head.Put32(1);
+		head.Put(' ', 16);
+		head.Put16(1);
+		head.Put16(frameNum);
 		frameNum++;
-		put16bit(&head[28],totalFrameNum);
-		head[30] = 0;
-		head[31] = 0;
-		put16bit(&head[32],0);
-		put16bit(&head[34],0);
-		((unsigned char*)head)[36] = 0xC0;
-		head[37] = 0;
-		fwrite(head,1,38,fp);
+		head.Put16(totalFrameNum);
+		head.Put8(0);
+		head.Put8(0);
+		head.Put16(0);
+		head.Put16(0);
+		head.Put8(0xC0);
+		head.Put8(0);
+		head.FWrite(fp);
 
-		put16bit(&head[24],0);
-		put16bit(&head[26],frameNum);
-		fwrite(head,1,32,fp);
+		head.Seek(24);
+		head.Put16(0);
+		head.Put16(frameNum);
+		head.FWrite(fp);
 	}
 }
 
