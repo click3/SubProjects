@@ -84,8 +84,40 @@ public:
 	}
 };
 
-
-
+class point {
+public:
+	int x;
+	int y;
+	bool light;
+	unsigned char getColorID() const {
+		const int result = (this->y + 32768 - 8192) / 8193 + 2;
+		//const int result = (this->x + 32768) / 10923 + 2;
+		BOOST_ASSERT(result > 0 && result <= 7);
+		switch(result){
+		case 0:
+			BOOST_ASSERT(false);
+			break;
+		case 1:
+			return 0x38;
+		case 2:
+			return 0x00;
+		case 3:
+			return 0x10;
+		case 4:
+			return 0x18;
+		case 5:
+			return 0x1F;
+		case 6:
+			return 0x28;
+		case 7:
+			return 0x30;
+		default:
+			BOOST_ASSERT(false);
+			break;
+		}
+		return result;
+	}
+};
 
 const int zumi = 127;
 
@@ -493,41 +525,6 @@ if(true || h == 67){
 
 #define ILDA_X(x)	((x)*128-32768)
 #define ILDA_Y(y)	((((y)+64)*128-32768)*-1)
-
-class point {
-public:
-	int x;
-	int y;
-	bool light;
-	unsigned char getColorID() const {
-		const int result = (this->y + 32768 - 8192) / 8193 + 2;
-		//const int result = (this->x + 32768) / 10923 + 2;
-		BOOST_ASSERT(result > 0 && result <= 7);
-		switch(result){
-		case 0:
-			BOOST_ASSERT(false);
-			break;
-		case 1:
-			return 0x38;
-		case 2:
-			return 0x00;
-		case 3:
-			return 0x10;
-		case 4:
-			return 0x18;
-		case 5:
-			return 0x1F;
-		case 6:
-			return 0x28;
-		case 7:
-			return 0x30;
-		default:
-			BOOST_ASSERT(false);
-			break;
-		}
-		return result;
-	}
-};
 
 bool SplitPoint(std::list<point> &points, unsigned int n) {
 	std::list<point>::iterator p = points.begin();
