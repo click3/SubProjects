@@ -1,5 +1,6 @@
 
 *.ild
+*.csv
 Debug
 png2ilda.sdf
 png2ilda.suo
@@ -8,4 +9,7 @@ Release
 png2ilda/Release
 png2ilda.opensdf
 png2ilda/png2ilda.vcxproj.user
+Profile
+png2ilda/Profile
 ipch
+profile.vsp
