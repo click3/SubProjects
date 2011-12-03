@@ -121,13 +121,13 @@ public:
 
 const int zumi = 127;
 
-struct line{
+class Line {
+public:
 	int x1;
 	int y1;
 	int x2;
 	int y2;
-	struct line *next;
-	struct line *prev;
+	Line(const int x1, const int y1, const int x2, const int y2) : x1(x1), y1(y1), x2(x2), y2(y2) { }
 };
 
 class OutLiner {
@@ -385,13 +385,10 @@ protected:
 	}
 };
 
-bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w,struct line **_lineData,struct line **_first,struct line **_last) {
+bool OutLineStart(std::list<boost::shared_ptr<Line> > &lines, unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w) {
 	BOOST_ASSERT(h < height);
 	BOOST_ASSERT(w < width);
 	BOOST_ASSERT(data != NULL);
-	BOOST_ASSERT(_lineData != NULL);
-	BOOST_ASSERT(_first != NULL);
-	BOOST_ASSERT(_last != NULL);
 	const int dirList[2][8][2] = {
 		{
 			{+1,-1},	{+1, 0},	{+1,+1},
@@ -403,7 +400,7 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 			{+1, 0},	{+1,-1},	{ 0,-1},
 		}
 	};
-	*_lineData = *_first = *_last = NULL;
+	const static unsigned int UNDEFINED_DIR = 8;
 	OutLiner img(width, height, data);
 	img.setDirConfig(dirList[0]);
 	img.seek(w, h);
@@ -413,43 +410,24 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 		return false;
 	}
 
-	struct line *lineData = (struct line*)malloc(sizeof(struct line)*4096);
-	struct line *top = lineData;
-	struct line *first = NULL;
-	struct line *last = NULL;
-	unsigned int prev_dir = 8;//絶対ありえない数値
-
 	bool begin_call = false;
 	if(img.is_begin()) {
 		begin_call = true;
 		img.begin();
-		first = last = top;
-		top++;
-		last->prev = NULL;
-		last->next = NULL;
-		last->x1 = w;
-		last->y1 = h;
-		last->x2 = img.current.x;
-		last->y2 = img.current.y;
-
-		while(img.next()) {
-			if(prev_dir != img.dir) {
-				BOOST_ASSERT(last->next == NULL);
-				last->next = top;
-				top++;
-				last->next->prev = last;
-				last->next->x1 = last->x2;
-				last->next->y1 = last->y2;
-				last = last->next;
-				last->next = NULL;
+		int startX = w;
+		int startY = h;
+		unsigned int prev_dir = UNDEFINED_DIR;
+		while(true) {
+			const bool breakFlag = !img.next();
+			if(breakFlag || prev_dir != img.dir) {
+				prev_dir = img.dir;
+				lines.push_back(boost::shared_ptr<Line>(new Line(startX, startY, img.current.x, img.current.y)));
+				startX = img.current.x;
+				startY = img.current.y;
 			}
-			last->x2 = img.current.x;
-			last->y2 = img.current.y;
-			prev_dir = img.dir;
-			BOOST_ASSERT(last->x1 < 512);
-			BOOST_ASSERT(last->y1 < 384);
-			BOOST_ASSERT(last->x2 < 512);
-			BOOST_ASSERT(last->y2 < 384);
+			if(breakFlag) {
+				break;
+			}
 		}
 	}
 
@@ -457,52 +435,22 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 	img.seek(w, h);
 	if(img.is_prev()) {
 		img.prev_begin();
-		if(begin_call) {
-			BOOST_ASSERT(first->prev == NULL);
-			first->prev = top;
-			top++;
-			first->prev->next = first;
-			first = first->prev;
-			first->prev = NULL;
-		} else {
-			first = last = top;
-			top++;
-			first->prev = NULL;
-			first->next = NULL;
-		}
-		first->x1 = img.current.x;
-		first->y1 = img.current.y;
-		first->x2 = w;
-		first->y2 = h;
-
-		prev_dir = 8;//絶対にありえない数値
-		while(img.next()) {
-			if(prev_dir != img.dir) {
-				BOOST_ASSERT(first->prev == NULL);
-				first->prev = top;
-				top++;
-				first->prev->next = first;
-				first->prev->x2 = first->x1;
-				first->prev->y2 = first->y1;
-				first = first->prev;
-				first->prev = NULL;
+		int endX = w;
+		int endY = h;
+		unsigned int prev_dir = UNDEFINED_DIR;
+		while(true) {
+			const bool breakFlag = !img.next();
+			if(breakFlag || prev_dir != img.dir) {
+				prev_dir = img.dir;
+				lines.push_front(boost::shared_ptr<Line>(new Line(img.current.x, img.current.y, endX, endY)));
+				endX = img.current.x;
+				endY = img.current.y;
 			}
-			first->x1 = img.current.x;
-			first->y1 = img.current.y;
-			prev_dir = img.dir;
-			BOOST_ASSERT(first->x1 < 512);
-			BOOST_ASSERT(first->y1 < 384);
-			BOOST_ASSERT(first->x2 < 512);
-			BOOST_ASSERT(first->y2 < 384);
+			if(breakFlag) {
+				break;
+			}
 		}
 	}
-	BOOST_ASSERT(first != NULL || last != NULL);
-
-	*_lineData = lineData;
-if(true || h == 67){
-	*_first = first;
-	*_last = last;
-}
 	return true;
 }
 
@@ -556,19 +504,10 @@ bool DecPoint(std::list<point> &points, unsigned int n){
 	return true;
 }
 
-bool Line2Points(std::list<point> &points, int count, struct line **first) {
-	BOOST_ASSERT(count >= 0);
-	BOOST_ASSERT(first != NULL);
+bool Line2Points(std::list<point> &points, const std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
 	unsigned int point_num = 2; // 始点 + 終点の分
-	for(int i = 0; i < count; i++) {
-		struct line *p = first[i];
-		if(p != NULL) {
-			point_num++;	// 線開始の分
-		}
-		while(p != NULL) {
-			point_num++;
-			p = p->next;
-		}
+	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+		point_num += 1 + lines->size();
 	}
 
 	points = std::list<point>(point_num);
@@ -577,23 +516,15 @@ bool Line2Points(std::list<point> &points, int count, struct line **first) {
 	pos->y = ILDA_Y(192);
 	pos->light = LIGHT_OFF;
 	++pos;
-	for(int i = 0; i < count; i++) {
-		struct line *p = first[i];
-		if(p != NULL) {
-			BOOST_ASSERT(p->x1 < 512);
-			BOOST_ASSERT(p->y1 < 384);
-			pos->x = ILDA_X(p->x1);
-			pos->y = ILDA_Y(p->y1);
-			pos->light = LIGHT_OFF;
-			++pos;
-		}
-		while(p != NULL) {
-			BOOST_ASSERT(p->x2 < 512);
-			BOOST_ASSERT(p->y2 < 384);
-			pos->x = ILDA_X(p->x2);
-			pos->y = ILDA_Y(p->y2);
+	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+		pos->x = ILDA_X(lines->front()->x1);
+		pos->y = ILDA_Y(lines->front()->y1);
+		pos->light = LIGHT_OFF;
+		++pos;
+		BOOST_FOREACH(const boost::shared_ptr<Line> line, *lines) {
+			pos->x = ILDA_X(line->x2);
+			pos->y = ILDA_Y(line->y2);
 			pos->light = LIGHT_ON;
-			p = p->next;
 			++pos;
 		}
 	}
@@ -645,71 +576,51 @@ bool WriteFrame(std::list<point> &points, const unsigned short frameNum, const u
 	return true;
 }
 
-bool SortLines(unsigned int count, struct line **first, struct line **last) {
+bool SortLines(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
 	point cur;
 	cur.x = 256;
 	cur.y = 192;
-	for(unsigned int i = 0; i < count; i++) {
-		if(first[i] == NULL) {
-			for(unsigned int l = i+1; l < count; l++) {
-				if(first[l] != NULL) {
-					first[i] = first[l];
-					last[i] = last[l];
-					first[l] = last[l] = NULL;
-					break;
-				}
-			}
-			continue;
-		}
-		unsigned int min = 0xFFFFFFFF;
+	typedef std::pair<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > *, boost::shared_ptr<std::list<boost::shared_ptr<Line> > > *> LOOP_PAIR;
+	for(unsigned int i = 0; i < allLines.size(); i++) {
+		unsigned int min = UINT_MAX;
 		unsigned int index = i;
-		for(unsigned int l = i; l < count; l++) {
-			if(first[l] == NULL) {
-				continue;
-			}
-			unsigned int dis = (unsigned int)sqrt((double)((first[l]->x1 - cur.x) * (first[l]->x1 - cur.x) + (first[l]->y1 - cur.y) * (first[l]->y1 - cur.y)));
+		for(unsigned int l = i; l < allLines.size(); l++) {
+			const unsigned int xDis = allLines[l]->front()->x1 - cur.x;
+			const unsigned int yDis = allLines[l]->front()->y1 - cur.y;
+			unsigned int dis = xDis * xDis + yDis * yDis;
 			if(dis < min) {
 				min = dis;
 				index = l;
 			}
 		}
 		if(index != i) {
-			struct line *t;
-			t = first[i];
-			first[i] = first[index];
-			first[index] = t;
-			t = last[i];
-			last[i] = last[index];
-			last[index] = t;
+			std::swap(allLines[i], allLines[index]);
 		}
-		cur.x = last[i]->x2;
-		cur.y = last[i]->y2;
+		cur.x = allLines[i]->back()->x2;
+		cur.y = allLines[i]->back()->y2;
 	}
 	return true;
 }
 
-bool DecLine(unsigned int count, struct line **first, struct line **last) {
-	unsigned int min = 0xFFFFFFFF;
+bool DecLine(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
+	unsigned int min = UINT_MAX;
 	unsigned int index = 0;
-	for(unsigned int i = 0; i < count; i++) {
-		struct line *p = first[i];
-		if(p != NULL) {
-			unsigned int pointNum = 0;
-			while(p != NULL) {
-				unsigned int dis = (unsigned int)sqrt((double)((p->x1 - p->x2) * (p->x1 - p->x2) + (p->y1 - p->y2) * (p->y1 - p->y2)));
-				pointNum += (int)ceil((double)dis / g_distance_max);
-				p = p->next;
-			}
-			if(pointNum < min) {
-				min = pointNum;
-				index = i;
-			}
+	unsigned int i = 0;
+	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+		unsigned int pointCount = 0;
+		BOOST_FOREACH(const boost::shared_ptr<Line> line, *lines) {
+			const unsigned int xDis = line->x1 - line->x2;
+			const unsigned int yDis = line->y1 - line->y2;
+			const unsigned int dis = xDis * xDis + yDis * yDis;
+			pointCount += static_cast<unsigned int>(std::ceil(static_cast<double>(dis) / (g_distance_max * g_distance_max)));
 		}
+		if(pointCount < min) {
+			min = pointCount;
+			index = i;
+		}
+		i++;
 	}
-	if(first[index] == NULL){
-		return false;
-	}
-	first[index] = last[index] = NULL;
+	allLines.erase(allLines.begin() + index);
 	return true;
 }
 
@@ -789,16 +700,16 @@ bool isIgnoreColor(const unsigned char index) {
 	return false;
 }
 
-void Line2Ilda(FILE *fp, int count, struct line **first, struct line **last) {
+void Line2Ilda(FILE *fp, std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
 	static int frameNum = 0;
 	const int totalFrameNum = 6572;
 
 	std::list<point> points;
 	do {
-		const bool sortResult = SortLines(count, first, last);
+		const bool sortResult = SortLines(allLines);
 		BOOST_ASSERT(sortResult);
 
-		const bool toPointResult = Line2Points(points, count, first);
+		const bool toPointResult = Line2Points(points, allLines);
 		BOOST_ASSERT(toPointResult);
 
 		for(unsigned int n = 0; n == 0 || (points.size() > g_points_max && n < g_distance_max / 128); n++){
@@ -807,7 +718,7 @@ void Line2Ilda(FILE *fp, int count, struct line **first, struct line **last) {
 			const bool splitResult = SplitPoint(points, g_distance_max);
 			BOOST_ASSERT(splitResult);
 		}
-	} while(!WriteFrame(points, frameNum, totalFrameNum, fp) && DecLine(count, first, last));
+	} while(!WriteFrame(points, frameNum, totalFrameNum, fp) && DecLine(allLines));
 	BOOST_ASSERT(points.size() <= g_points_max);
 	frameNum++;
 
@@ -839,12 +750,9 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 #define p(h,w)	(&data[((h) * width + (w)) * 4 + 1])
 	unsigned int color;
 	unsigned int count = 0;
-	struct line **lineData = static_cast<struct line **>(malloc(sizeof(struct line *) * g_line_max));
-	struct line **first = static_cast<struct line **>(malloc(sizeof(struct line *) * g_line_max));
-	struct line **last = static_cast<struct line **>(malloc(sizeof(struct line *) * g_line_max));
-	unsigned int lineCount = 0;
 
 	unsigned int h = 0;
+	std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > allLines;
 	while(h < height){
 		unsigned int w;
 		if(h == 0){
@@ -865,9 +773,9 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 						color = *p(h,w+1);
 					}
 				} else {
-					BOOST_ASSERT(lineCount < g_line_max);
-					if(OutLineStart(height,width,data,h,w,&lineData[lineCount],&first[lineCount],&last[lineCount])){
-						lineCount++;
+					boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines(new std::list<boost::shared_ptr<Line> >());
+					if(OutLineStart(*lines, height, width, data, h, w)){
+						allLines.push_back(lines);
 						if(w+1 < width && *p(h,w+1) != zumi) {
 							color = *p(h,w+1);
 						}
@@ -880,12 +788,7 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 		}
 		h++;
 	}
-	Line2Ilda(fp, lineCount, first, last);
-	while(lineCount){
-		lineCount--;
-		free(lineData[lineCount]);
-	}
-
+	Line2Ilda(fp, allLines);
 #undef p
 }
 
