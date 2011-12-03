@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+#include <iostream>
 #include <vector>
 #include <list>
 #include <algorithm>
-#include <math.h>
-#include <time.h>
-#include <iostream>
 #include <numeric>
 
-#include "libpng.h"
-#include "boost/program_options.hpp"
-#include "boost/foreach.hpp"
+#include <libpng.h>
+#include <boost/program_options.hpp>
+#include <boost/foreach.hpp>
 
 unsigned int g_points_max;
 unsigned int g_distance_max;
