@@ -276,7 +276,6 @@ public:
 			result = (result + 7) % 8;
 		}
 		result = (result + 1) % 8;
-		//BOOST_ASSERT(is_wall(result) || equal_nextColor(result));
 		if(!is_wall(result) && !equal_nextColor(result)) {
 			return get_outDir(dir);
 		}
@@ -296,7 +295,6 @@ public:
 	}
 
 	bool next() {
-//printf("%d:%d\n",current.x,current.y);
 		if(is_lineEnd()) {
 			line_end = loop_point;
 			set_zumi();
@@ -320,7 +318,6 @@ public:
 			dir = in_dir;
 		} else {
 			while(out_dir != in_dir) {
-//printf("%3d:%3d\tout:%d in:%d(%d)\n",current.x, current.y, out_dir,in_dir,dir);
 				if(((out_dir - in_dir + 8) % 8) < 4) {
 					in_dir = (in_dir + 1) % 8;
 				} else {
@@ -332,11 +329,9 @@ public:
 			}
 			in_dir = get_inDir(dir);
 			out_dir = get_outDir(dir);
-//printf("%3d:%3d\tout:%d in:%d(%d)\n",current.x, current.y, out_dir,in_dir,dir);
 			if(in_dir == out_dir){
 				dir = out_dir;
 			} else {
-//printf("%3d:%3d\tback(%d)\n", current.x, current.y, dir);
 				dir = (dir + 4) % 8;
 				move();
 				cur()[1] = cur()[2] = cur()[3] = *cur();
@@ -409,14 +404,9 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 		}
 	};
 	*_lineData = *_first = *_last = NULL;
-//printf("OnLine\t%d\t%d\n",w,h);
 	OutLiner img(width, height, data);
 	img.setDirConfig(dirList[0]);
 	img.seek(w, h);
-//	BOOST_ASSERT(!img.equal_nextColor(4));
-//	BOOST_ASSERT(!img.equal_nextColor(5));
-//	BOOST_ASSERT(!img.equal_nextColor(6));
-//	BOOST_ASSERT(!img.equal_nextColor(7));
 
 	if(!img.is_line()) {
 		img.set_zumi();
@@ -443,7 +433,6 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 		last->y2 = img.current.y;
 
 		while(img.next()) {
-//printf("begin %3d:%3d(%d)\n",img.current.x,img.current.y,img.dir);
 			if(prev_dir != img.dir) {
 				BOOST_ASSERT(last->next == NULL);
 				last->next = top;
@@ -488,7 +477,6 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 
 		prev_dir = 8;//â‘Î‚É‚ ‚è‚¦‚È‚¢”’l
 		while(img.next()) {
-//printf("prev %3d:%3d(%d)\n",img.current.x,img.current.y,img.dir);
 			if(prev_dir != img.dir) {
 				BOOST_ASSERT(first->prev == NULL);
 				first->prev = top;
@@ -510,7 +498,6 @@ bool OutLineStart(unsigned int height,unsigned int width,unsigned char *data, un
 	}
 	BOOST_ASSERT(first != NULL || last != NULL);
 
-//getchar();
 	*_lineData = lineData;
 if(true || h == 67){
 	*_first = first;
@@ -808,13 +795,17 @@ void Line2Ilda(FILE *fp, int count, struct line **first, struct line **last) {
 
 	std::list<point> points;
 	do {
-		BOOST_ASSERT(SortLines(count, first, last));
+		const bool sortResult = SortLines(count, first, last);
+		BOOST_ASSERT(sortResult);
 
-		BOOST_ASSERT(Line2Points(points, count, first));
+		const bool toPointResult = Line2Points(points, count, first);
+		BOOST_ASSERT(toPointResult);
 
 		for(unsigned int n = 0; n == 0 || (points.size() > g_points_max && n < g_distance_max / 128); n++){
-			BOOST_ASSERT(DecPoint(points, n));
-			BOOST_ASSERT(SplitPoint(points, g_distance_max));
+			const bool decResult = DecPoint(points, n);
+			BOOST_ASSERT(decResult);
+			const bool splitResult = SplitPoint(points, g_distance_max);
+			BOOST_ASSERT(splitResult);
 		}
 	} while(!WriteFrame(points, frameNum, totalFrameNum, fp) && DecLine(count, first, last));
 	BOOST_ASSERT(points.size() <= g_points_max);
