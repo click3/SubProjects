@@ -793,41 +793,76 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 }
 
 BOOST_STATIC_ASSERT(sizeof(png_byte) == 1);
+class SingleImageReader {
+protected:
+	bool first;
+	unsigned int width;
+	unsigned int height;
+	std::vector<png_byte> data;
+	std::vector<png_byte *> rows;
+public:
+	SingleImageReader() : first(true) { }
+	bool Read(const boost::filesystem::path &filePath) {
+		FILE * const fp = ::fopen(filePath.string().c_str(), "rb");
+		if(fp == NULL){
+			return false;
+		}
+		png_struct *png_ptr = ::png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+		png_info *info_ptr = ::png_create_info_struct(png_ptr);
+		::png_init_io(png_ptr, fp);
+		::png_read_info(png_ptr, info_ptr);
+		::png_get_IHDR(png_ptr, info_ptr, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+		if(first) {
+			this->width = info_ptr->width;
+			this->height = info_ptr->height;
+			data.resize((info_ptr->height + 2) * info_ptr->width * 4);
+			::memset(&data[0], 0x80, info_ptr->width);
+			::memset(&data[data.size() - info_ptr->width], 0x80, info_ptr->width);
+			rows.resize(info_ptr->height);
+			for(unsigned int i = 0; i < info_ptr->height; i++) {
+				rows[i] = &data[(1 + i) * info_ptr->width * 4];
+			}
+			first = false;
+		}
+		BOOST_ASSERT(this->width == info_ptr->width);
+		BOOST_ASSERT(this->height == info_ptr->height);
+		if(info_ptr->color_type == PNG_COLOR_TYPE_PALETTE) {
+			::png_set_palette_to_rgb(png_ptr);
+		}
+		if(info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+			::png_set_gray_to_rgb(png_ptr);
+		}
+		if(::png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+			::png_set_tRNS_to_alpha(png_ptr);
+		}
+		if(info_ptr->color_type == PNG_COLOR_TYPE_RGB || info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+			::png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+		}
+		::png_read_image(png_ptr, &rows.front());
+		::png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+		::fclose(fp);
+		return true;
+	}
+	unsigned char *GetData(void) {
+		return rows[0];
+	}
+	unsigned int GetWidth(void) {
+		return this->width;
+	}
+	unsigned int GetHeight(void) {
+		return this->height;
+	}
+};
+
 bool procImage(FILE * const ilda, const boost::filesystem::path &filePath) {
-	FILE * const fp = ::fopen(filePath.string().c_str(), "rb");
-	if(fp == NULL){
+	if(!boost::filesystem::is_regular_file(filePath)) {
 		return false;
 	}
-	::png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	::png_infop info_ptr = png_create_info_struct(png_ptr);
-	::png_init_io(png_ptr, fp);
-	::png_read_info(png_ptr, info_ptr);
-	::png_get_IHDR(png_ptr, info_ptr, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-	const unsigned int height = info_ptr->height;
-	const unsigned int width = info_ptr->width;
-	if(info_ptr->color_type == PNG_COLOR_TYPE_PALETTE) {
-		::png_set_palette_to_rgb(png_ptr);
-	}
-	if(info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
-		::png_set_gray_to_rgb(png_ptr);
-	}
-	if(::png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-		::png_set_tRNS_to_alpha(png_ptr);
-	}
-	if(info_ptr->color_type == PNG_COLOR_TYPE_RGB || info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
-		::png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
-	}
-	std::vector<png_byte> data((height + 2) * width * 4);
-	::memset(&data.front(), 0x80, data.size());
-	std::vector<png_byte *> rows(height);
-	for(unsigned int i = 0; i < height; i++) {
-		rows[i] = &data[(1 + i) * width * 4];
-	}
-	::png_read_image(png_ptr, &rows.front());
-	::png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	::fclose(fp);
+	static SingleImageReader reader;
+	const bool imageReadResult = reader.Read(filePath);
+	BOOST_ASSERT(imageReadResult);
 
-	::OutLine(ilda, height, width, rows[0]);
+	::OutLine(ilda, reader.GetHeight(), reader.GetWidth(), reader.GetData());
 
 	return true;
 }
