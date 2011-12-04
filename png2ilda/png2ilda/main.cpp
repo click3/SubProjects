@@ -798,9 +798,8 @@ int procImage(FILE *ilda, const char *dir_name, const char *fileName) {
 	if(fp == NULL){
 		return 1;
 	}
-	png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0,0,0);
+	png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	png_infop info_ptr = png_create_info_struct(png_ptr);
-	png_infop end_info = png_create_info_struct(png_ptr);
 	png_init_io(png_ptr, fp);
 	png_read_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 
@@ -836,12 +835,11 @@ int procImage(FILE *ilda, const char *dir_name, const char *fileName) {
 			h++;
 		}
 	}
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	fclose(fp);
 
 	OutLine(ilda, height, width, data);
 	free(data - width);
-
 
 	return 0;
 }
