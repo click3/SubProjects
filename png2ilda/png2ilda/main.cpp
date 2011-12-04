@@ -510,7 +510,7 @@ bool Line2Points(std::list<point> &points, const std::vector<boost::shared_ptr<s
 		point_num += 1 + lines->size();
 	}
 
-	points = std::list<point>(point_num);
+	points.resize(point_num);
 	std::list<point>::iterator pos = points.begin();
 	pos->x = ILDA_X(256);
 	pos->y = ILDA_Y(192);
@@ -580,7 +580,6 @@ bool SortLines(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> >
 	point cur;
 	cur.x = 256;
 	cur.y = 192;
-	typedef std::pair<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > *, boost::shared_ptr<std::list<boost::shared_ptr<Line> > > *> LOOP_PAIR;
 	for(unsigned int i = 0; i < allLines.size(); i++) {
 		unsigned int min = UINT_MAX;
 		unsigned int index = i;
