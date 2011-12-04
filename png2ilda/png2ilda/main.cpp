@@ -407,7 +407,7 @@ Line *NewLine(const int x1, const int y1, const int x2, const int y2) {
 	return line;
 }
 
-bool OutLineStart(std::list<Line *> &lines, unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w) {
+bool OutLineStart(std::list<Line *> &lines, const unsigned int height, const unsigned int width, unsigned char * const data, const unsigned int h, const unsigned int w) {
 	BOOST_ASSERT(h < height);
 	BOOST_ASSERT(w < width);
 	BOOST_ASSERT(data != NULL);
@@ -424,49 +424,46 @@ bool OutLineStart(std::list<Line *> &lines, unsigned int height,unsigned int wid
 	};
 	const static unsigned int UNDEFINED_DIR = 8;
 	OutLiner img(width, height, data);
-	img.setDirConfig(dirList[0]);
-	img.seek(w, h);
+	for(unsigned int i = 0; i < 2; i++) {
+		img.setDirConfig(dirList[i]);
+		img.seek(w, h);
 
-	if(!img.is_line()) {
-		img.set_zumi();
-		return false;
-	}
-
-	bool begin_call = false;
-	if(img.is_begin()) {
-		begin_call = true;
-		img.begin();
-		int startX = w;
-		int startY = h;
-		unsigned int prev_dir = UNDEFINED_DIR;
-		while(true) {
-			const bool breakFlag = !img.next();
-			if(breakFlag || prev_dir != img.dir) {
-				prev_dir = img.dir;
-				lines.push_back(NewLine(startX, startY, img.current.x, img.current.y));
-				startX = img.current.x;
-				startY = img.current.y;
-			}
-			if(breakFlag) {
-				break;
-			}
+		if(i == 0 && !img.is_line()) {
+			img.set_zumi();
+			return false;
 		}
-	}
-
-	img.setDirConfig(dirList[1]);
-	img.seek(w, h);
-	if(img.is_prev()) {
-		img.prev_begin();
-		int endX = w;
-		int endY = h;
+		switch(i) {
+			case 0:
+				if(img.is_begin()) {
+					img.begin();
+				} else {
+					continue;
+				}
+				break;
+			case 1:
+				if(img.is_prev()) {
+					img.prev_begin();
+				} else {
+					continue;
+				}
+				break;
+			default:
+				BOOST_ASSERT(false);
+		}
+		int x = w;
+		int y = h;
 		unsigned int prev_dir = UNDEFINED_DIR;
 		while(true) {
 			const bool breakFlag = !img.next();
 			if(breakFlag || prev_dir != img.dir) {
 				prev_dir = img.dir;
-				lines.push_front(NewLine(img.current.x, img.current.y, endX, endY));
-				endX = img.current.x;
-				endY = img.current.y;
+				if(i == 0) {
+					lines.push_back(NewLine(x, y, img.current.x, img.current.y));
+				} else {
+					lines.push_front(NewLine(img.current.x, img.current.y, x, y));
+				}
+				x = img.current.x;
+				y = img.current.y;
 			}
 			if(breakFlag) {
 				break;
