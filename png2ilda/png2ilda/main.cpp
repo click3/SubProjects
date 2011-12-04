@@ -128,7 +128,16 @@ public:
 	int y1;
 	int x2;
 	int y2;
-	Line(const int x1, const int y1, const int x2, const int y2) : x1(x1), y1(y1), x2(x2), y2(y2) { }
+	Line() { }
+	Line(const int x1, const int y1, const int x2, const int y2) {
+		Set(x1, y1, x2, y2);
+	}
+	void Set(const int x1, const int y1, const int x2, const int y2) {
+		this->x1 = x1;
+		this->y1 = y1;
+		this->x2 = x2;
+		this->y2 = y2;
+	}
 };
 
 class OutLiner {
@@ -386,7 +395,19 @@ protected:
 	}
 };
 
-bool OutLineStart(std::list<boost::shared_ptr<Line> > &lines, unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w) {
+std::vector<Line> lineStock(65535);
+unsigned int lineStockPos = 0;
+void LineClear() {
+	lineStockPos = 0;
+}
+Line *NewLine(const int x1, const int y1, const int x2, const int y2) {
+	BOOST_ASSERT(lineStockPos < lineStock.size());
+	Line * const line = &lineStock[lineStockPos++];
+	line->Set(x1, y1, x2, y2);
+	return line;
+}
+
+bool OutLineStart(std::list<Line *> &lines, unsigned int height,unsigned int width,unsigned char *data, unsigned int h, unsigned int w) {
 	BOOST_ASSERT(h < height);
 	BOOST_ASSERT(w < width);
 	BOOST_ASSERT(data != NULL);
@@ -422,7 +443,7 @@ bool OutLineStart(std::list<boost::shared_ptr<Line> > &lines, unsigned int heigh
 			const bool breakFlag = !img.next();
 			if(breakFlag || prev_dir != img.dir) {
 				prev_dir = img.dir;
-				lines.push_back(boost::shared_ptr<Line>(new Line(startX, startY, img.current.x, img.current.y)));
+				lines.push_back(NewLine(startX, startY, img.current.x, img.current.y));
 				startX = img.current.x;
 				startY = img.current.y;
 			}
@@ -443,7 +464,7 @@ bool OutLineStart(std::list<boost::shared_ptr<Line> > &lines, unsigned int heigh
 			const bool breakFlag = !img.next();
 			if(breakFlag || prev_dir != img.dir) {
 				prev_dir = img.dir;
-				lines.push_front(boost::shared_ptr<Line>(new Line(img.current.x, img.current.y, endX, endY)));
+				lines.push_front(NewLine(img.current.x, img.current.y, endX, endY));
 				endX = img.current.x;
 				endY = img.current.y;
 			}
@@ -505,9 +526,9 @@ bool DecPoint(std::list<point> &points, unsigned int n){
 	return true;
 }
 
-bool Line2Points(std::list<point> &points, const std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
+bool Line2Points(std::list<point> &points, const std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
 	unsigned int point_num = 2; // 始点 + 終点の分
-	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+	BOOST_FOREACH(const boost::shared_ptr<std::list<Line *> > lines, allLines) {
 		point_num += 1 + lines->size();
 	}
 
@@ -517,12 +538,12 @@ bool Line2Points(std::list<point> &points, const std::vector<boost::shared_ptr<s
 	pos->y = ILDA_Y(192);
 	pos->light = LIGHT_OFF;
 	++pos;
-	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+	BOOST_FOREACH(const boost::shared_ptr<std::list<Line *> > lines, allLines) {
 		pos->x = ILDA_X(lines->front()->x1);
 		pos->y = ILDA_Y(lines->front()->y1);
 		pos->light = LIGHT_OFF;
 		++pos;
-		BOOST_FOREACH(const boost::shared_ptr<Line> line, *lines) {
+		BOOST_FOREACH(const Line * const line, *lines) {
 			pos->x = ILDA_X(line->x2);
 			pos->y = ILDA_Y(line->y2);
 			pos->light = LIGHT_ON;
@@ -577,7 +598,7 @@ bool WriteFrame(std::list<point> &points, const unsigned short frameNum, const u
 	return true;
 }
 
-bool SortLines(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
+bool SortLines(std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
 	point cur;
 	cur.x = 256;
 	cur.y = 192;
@@ -602,13 +623,13 @@ bool SortLines(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> >
 	return true;
 }
 
-bool DecLine(std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
+bool DecLine(std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
 	unsigned int min = UINT_MAX;
 	unsigned int index = 0;
 	unsigned int i = 0;
-	BOOST_FOREACH(const boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines, allLines) {
+	BOOST_FOREACH(const boost::shared_ptr<std::list<Line *> > lines, allLines) {
 		unsigned int pointCount = 0;
-		BOOST_FOREACH(const boost::shared_ptr<Line> line, *lines) {
+		BOOST_FOREACH(const Line *const line, *lines) {
 			const unsigned int xDis = line->x1 - line->x2;
 			const unsigned int yDis = line->y1 - line->y2;
 			const unsigned int dis = xDis * xDis + yDis * yDis;
@@ -700,7 +721,7 @@ bool isIgnoreColor(const unsigned char index) {
 	return false;
 }
 
-void Line2Ilda(FILE *fp, std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > &allLines) {
+void Line2Ilda(FILE *fp, std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
 	static int frameNum = 0;
 	const int totalFrameNum = 6572;
 
@@ -752,7 +773,8 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 	unsigned int count = 0;
 
 	unsigned int h = 0;
-	std::vector<boost::shared_ptr<std::list<boost::shared_ptr<Line> > > > allLines;
+	LineClear();
+	std::vector<boost::shared_ptr<std::list<Line *> > > allLines;
 	while(h < height){
 		unsigned int w;
 		if(h == 0){
@@ -773,7 +795,7 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 						color = *p(h,w+1);
 					}
 				} else {
-					boost::shared_ptr<std::list<boost::shared_ptr<Line> > > lines(new std::list<boost::shared_ptr<Line> >());
+					boost::shared_ptr<std::list<Line *> > lines(new std::list<Line *>());
 					if(OutLineStart(*lines, height, width, data, h, w)){
 						allLines.push_back(lines);
 						if(w+1 < width && *p(h,w+1) != zumi) {
