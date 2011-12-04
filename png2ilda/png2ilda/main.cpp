@@ -10,6 +10,7 @@
 #include <numeric>
 
 #include <libpng.h>
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 #include <boost/assert.hpp>
@@ -791,57 +792,44 @@ void OutLine(FILE *fp, unsigned int height,unsigned int width, unsigned char *da
 #undef p
 }
 
-int procImage(FILE *ilda, const char *dir_name, const char *fileName) {
-	char inName[256];
-	sprintf(inName,"%s/%s", dir_name, fileName);
-	FILE *fp = fopen(inName, "rb");
+BOOST_STATIC_ASSERT(sizeof(png_byte) == 1);
+bool procImage(FILE * const ilda, const boost::filesystem::path &filePath) {
+	FILE * const fp = ::fopen(filePath.string().c_str(), "rb");
 	if(fp == NULL){
-		return 1;
+		return false;
 	}
-	png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	png_init_io(png_ptr, fp);
-	png_read_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-
-	png_byte** row_pointers;
-	row_pointers = png_get_rows(png_ptr, info_ptr);
-
+	::png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	::png_infop info_ptr = png_create_info_struct(png_ptr);
+	::png_init_io(png_ptr, fp);
+	::png_read_info(png_ptr, info_ptr);
+	::png_get_IHDR(png_ptr, info_ptr, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	const unsigned int height = info_ptr->height;
 	const unsigned int width = info_ptr->width;
-	unsigned int size = 4 * width * height + width * 2;
-	unsigned char *data = (unsigned char*)malloc(size);
-	memset(data,0x80,size);
-
-	data += width;
-	{
-		unsigned int h = 0;
-		while(h < height){
-			if(info_ptr->pixel_depth == 32){
-				memcpy(&data[h * width * 4], row_pointers[h], width * 4);
-			} else {
-				unsigned int w = 0;
-				while(w < width){
-					if(info_ptr->pixel_depth == 24){
-						memcpy(&data[(h * width + w) * 4],&row_pointers[h][w*3],3);
-					} else if(info_ptr->pixel_depth == 8) {
-						memset(&data[(h * width + w) * 4],row_pointers[h][w],3);
-					} else if(info_ptr->pixel_depth == 1) {
-						memset(&data[(h * width + w) * 4],(row_pointers[h][w/8]&(0x80>>(w%8))) ? 0xFF : 0,3);
-					}
-					data[(h * width + w) * 4 + 3] = 0xFF;
-					w++;
-				}
-			}
-			h++;
-		}
+	if(info_ptr->color_type == PNG_COLOR_TYPE_PALETTE) {
+		::png_set_palette_to_rgb(png_ptr);
 	}
-	png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-	fclose(fp);
+	if(info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+		::png_set_gray_to_rgb(png_ptr);
+	}
+	if(::png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+		::png_set_tRNS_to_alpha(png_ptr);
+	}
+	if(info_ptr->color_type == PNG_COLOR_TYPE_RGB || info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
+		::png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+	}
+	std::vector<png_byte> data((height + 2) * width * 4);
+	::memset(&data.front(), 0x80, data.size());
+	std::vector<png_byte *> rows(height);
+	for(unsigned int i = 0; i < height; i++) {
+		rows[i] = &data[(1 + i) * width * 4];
+	}
+	::png_read_image(png_ptr, &rows.front());
+	::png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+	::fclose(fp);
 
-	OutLine(ilda, height, width, data);
-	free(data - width);
+	::OutLine(ilda, height, width, rows[0]);
 
-	return 0;
+	return true;
 }
 
 int main(int argc, char *argv[]){
@@ -897,7 +885,7 @@ int main(int argc, char *argv[]){
 		}
 		sprintf(fileName,"%d.png",i);
 		i++;
-	}while(procImage(fp, dir_name.c_str(), fileName) == 0);
+	}while(::procImage(fp, boost::filesystem::path(dir_name) / fileName));
 	fclose(fp);
 	return 0;
 }
