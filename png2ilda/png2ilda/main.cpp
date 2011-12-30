@@ -718,23 +718,50 @@ bool isIgnoreColor(const unsigned char index) {
 	return false;
 }
 
+bool SplitLines(std::list<Line *> &lines) {
+	for(std::list<Line *>::iterator it = lines.begin(); it != lines.end();) {
+		const unsigned int xDis = std::abs((*it)->x1 - (*it)->x2);
+		const unsigned int yDis = std::abs((*it)->y1 - (*it)->y2);
+		if(std::max(xDis, yDis) > g_distance_max) {
+			Line * const cur = *it;
+			const unsigned int halfX = cur->x1 + (cur->x2 - cur->x1) / 2;
+			const unsigned int halfY = cur->y1 + (cur->y2 - cur->y1) / 2;
+			it = lines.insert(it, NewLine(cur->x1, cur->y1, halfX, halfY));
+			cur->x1 = halfX;
+			cur->y1 = halfY;
+			continue;
+		}
+		++it;
+	}
+	return true;
+}
+bool SplitAllLines(std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
+	BOOST_FOREACH(boost::shared_ptr<std::list<Line *> > &lines, allLines) {
+		if(!SplitLines(*lines)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void Line2Ilda(FILE *fp, std::vector<boost::shared_ptr<std::list<Line *> > > &allLines) {
 	static int frameNum = 0;
 	const int totalFrameNum = 6572;
+	
+	const bool sortResult = SortLines(allLines);
+	BOOST_ASSERT(sortResult);
+
+	const bool splitResult = SplitAllLines(allLines);
+	BOOST_ASSERT(splitResult);
 
 	std::list<point> points;
 	do {
-		const bool sortResult = SortLines(allLines);
-		BOOST_ASSERT(sortResult);
-
 		const bool toPointResult = Line2Points(points, allLines);
 		BOOST_ASSERT(toPointResult);
 
 		for(unsigned int n = 0; n == 0 || (points.size() > g_points_max && n < g_distance_max / 128); n++){
 			const bool decResult = DecPoint(points, n);
 			BOOST_ASSERT(decResult);
-			const bool splitResult = SplitPoint(points, g_distance_max);
-			BOOST_ASSERT(splitResult);
 		}
 	} while(!WriteFrame(points, frameNum, totalFrameNum, fp) && DecLine(allLines));
 	BOOST_ASSERT(points.size() <= g_points_max);
@@ -943,4 +970,3 @@ int main(int argc, char *argv[]){
 	fclose(fp);
 	return 0;
 }
-
