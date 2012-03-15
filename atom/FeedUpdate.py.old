@@ -1,0 +1,111 @@
+#!/usr/bin/python3.2
+# -*- coding: utf-8 -*-
+
+import http.client
+from AtomFeed import AtomFeed
+import os
+import codecs
+import glob
+import threading
+import sys
+
+class FeedUpdateData:
+    def getCheckUrl():
+        return 'http://example.com/'
+
+    def __init__(self):
+        self.__feed = None
+        self.__body = None
+
+    def setFeed(self, feed):
+        assert(isinstance(feed, AtomFeed))
+        self.__feed = feed
+
+    def setBody(self, body):
+        assert(isinstance(body, str))
+        self.__body = body
+
+    def getFeed(self):
+        return self.__feed
+
+    def getBody(self):
+        return self.__body
+
+    def updateExist(self):
+        return False
+
+    def getTitle(self):
+        return 'dummyTitle'
+
+    def getUrl(self):
+        return 'http://example.com/'
+
+    def getSummary(self):
+        return ""
+
+    def getUpdated(self):
+        return datetime.datetime.utcnow()
+
+class FeedUpdate:
+    def __init__(self, path, data):
+        assert(isinstance(path, str))
+        assert(isinstance(data, FeedUpdateData))
+        self.__path = path
+        self.__feed = AtomFeed(path)
+        data.setFeed(self.__feed)
+        self.__data = data
+
+    def run(self):
+        url = http.client.urlsplit(self.__data.__class__.getCheckUrl())
+        conn = None
+        if (url.scheme == 'http'):
+            conn = http.client.HTTPConnection(url.netloc)
+        elif (url.scheme == 'https'):
+            conn = http.client.HTTPSConnection(url.netloc)
+        conn.request('GET', url.path)
+        response = conn.getresponse()
+        if (response.status != 200):
+            return
+        body = response.readall().decode('utf-8')
+        self.__data.setBody(body)
+        if (not self.__data.updateExist()):
+            return
+        entry = {}
+        entry['title'] = self.__data.getTitle()
+        entry['url'] = self.__data.getUrl()
+        entry['updated'] = self.__data.getUpdated()
+        entry['summary'] = self.__data.getSummary()
+        self.__feed.appendEntry(entry)
+        tmpPath = self.__path + '.tmp'
+        if (os.path.exists(tmpPath)):
+            os.remove(tmpPath)
+        xml = self.__feed.toXml().decode('utf-8')
+        out = codecs.open(tmpPath, 'w', 'utf-8')
+        out.write(xml)
+        out.close()
+        os.remove(self.__path)
+        os.rename(tmpPath, self.__path)
+
+
+class FeedUpdateThread(threading.Thread):
+    def __init__(self, path):
+        super().__init__()
+        self.__path = path
+
+    def run(self):
+        moduleName = self.__path.split('.')[0]
+        getattr(__import__(moduleName), 'main')()
+
+
+def main():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    threadList = []
+    for path in glob.glob('*_feed.py'):
+        thread = FeedUpdateThread(path)
+        thread.start()
+        threadList.append(thread)
+    for thread in threadList:
+        thread.join()
+
+if __name__ == '__main__':
+    main()
