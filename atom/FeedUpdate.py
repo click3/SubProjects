@@ -9,7 +9,6 @@ import glob
 import threading
 import sys
 import datetime
-import index
 
 class FeedUpdateData:
     def getCheckUrl():
@@ -142,7 +141,7 @@ def main():
         threadList.append(thread)
     for thread in threadList:
         thread.join()
-    index.main()
+    getattr(__import__('index'), 'main')()
 
 if __name__ == '__main__':
     main()
