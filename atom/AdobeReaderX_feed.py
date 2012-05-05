@@ -10,7 +10,7 @@ import datetime
 
 class AdobeReaderXData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.adobe.com/jp/support/downloads/acrwin.html'
+        return 'http://www.adobe.com/support/downloads/product.jsp?product=acr&platform=win'
 
     def __init__(self):
         super().__init__()
@@ -24,7 +24,7 @@ class AdobeReaderXData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('Adobe Reader (\d[^<]*?\d) アップデート', re.DOTALL)
+        p = re.compile('Version\s*(\d(?:\.?\d)*)', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__updateExist = False
