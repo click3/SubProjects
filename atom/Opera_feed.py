@@ -24,7 +24,7 @@ class OperaData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('\d{4}-\d{1,2}-\d{1,2} - <a href="(.*?)">Opera (\d.*?\d)</a>', re.DOTALL)
+        p = re.compile('\d{4}-\d{1,2}-\d{1,2} - <a href="(.*?)">Opera (\d(\.*?\d)*)</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__updateExist = False
