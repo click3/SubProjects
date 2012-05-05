@@ -86,7 +86,7 @@ class FeedUpdate:
         elif (url.scheme == 'https'):
             conn = http.client.HTTPSConnection(url.netloc)
         assert(conn != None)
-        conn.request('GET', url.path)
+        conn.request('GET', url.path + '?' + url.query)
         response = conn.getresponse()
         if (response.status != 200):
             return None
