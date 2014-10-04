@@ -59,7 +59,7 @@ class indexData(FeedUpdateData):
         self.__updateExist = True
         self.__title = title
         self.__content = content
-        self.__url = 'http://sweetie089.no-ip.biz/atom/'
+        self.__url = 'http://feeds.click3.org/application/'
 
     def __getAfterFeedList(pattern):
         list = []
@@ -110,7 +110,7 @@ class indexData(FeedUpdateData):
         os.chmod(outPath, stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP | stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
 
 def main():
-    FeedUpdate(__file__, 'http://sweetie089.no-ip.biz/atom/').run()
+    FeedUpdate(__file__, 'http://feeds.click3.org/application/').run()
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ class AndroidSDKData(FeedUpdateData):
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -21,21 +22,20 @@ class AndroidSDKData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('Android\s*([\d\.]*)\s*Platform', re.DOTALL)
+        p = re.compile(r'<a [^>]*href="([^"]+(adt-bundle-windows-x86_64-(\d{8})\.zip))"[^>]*>\2</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
-        version = result.group(1)
+        url = result.group(1)
+        version = result.group(3)
         title = self.__class__.__name__.split("Data")[0] + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
-            self.__updateExist = False
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'https://developer.android.com/sdk/android-' + version + '.html'
-
+        self.__url = url
 
     def updateExist(self):
         return self.__updateExist
@@ -52,8 +52,11 @@ class AndroidSDKData(FeedUpdateData):
     def getUpdated(self):
         return datetime.datetime.utcnow()
 
+    def isError(self):
+        return self.__isError
+
 def main():
-    FeedUpdate(__file__, 'https://developer.android.com/index.html').run()
+    return FeedUpdate(__file__, 'https://developer.android.com/index.html').run()
 
 
 if __name__ == '__main__':

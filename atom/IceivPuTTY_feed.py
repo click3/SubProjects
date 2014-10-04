@@ -3,11 +3,14 @@
 
 from FeedUpdate import FeedUpdate, FeedUpdateData
 import re
+import os
+from AtomFeed import AtomFeed
+import codecs
 import datetime
 
-class PerlData(FeedUpdateData):
+class IceivPuTTYData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.perl.org/get.html'
+        return 'http://ice.hotmint.com/putty/'
 
     def __init__(self):
         super().__init__()
@@ -22,19 +25,20 @@ class PerlData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('currently\s*(\d(?:\.?\d)+)', re.DOTALL)
+        p = re.compile(r'<a href="(putty-gdi-(\d{8})\.zip)">\1<\/a>')
         result = p.search(body)
         if (result == None):
             self.__isError = True
             return
-        version = result.group(1)
-        title = self.__class__.__name__.split("Data")[0] + version
+        filename = result.group(1)
+        version = result.group(2)
+        title = 'iceiv+putty' + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = self.__class__.getCheckUrl()
+        self.__url = 'http://ice.hotmint.com/putty/' + filename
 
     def updateExist(self):
         return self.__updateExist
@@ -56,7 +60,7 @@ class PerlData(FeedUpdateData):
 
 
 def main():
-    return FeedUpdate(__file__, 'http://www.perl.org/').run()
+    return FeedUpdate(__file__, 'http://ice.hotmint.com/putty/').run()
 
 
 if __name__ == '__main__':

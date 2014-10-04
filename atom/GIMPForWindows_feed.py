@@ -7,13 +7,14 @@ import datetime
 
 class GIMPForWindowsData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://gimp-win.sourceforge.net/stable.html'
+        return 'http://www.gimp.org/downloads/'
 
     def __init__(self):
         super().__init__()
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -21,10 +22,10 @@ class GIMPForWindowsData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('version\s*(\d(?:\.?\d)*)', re.DOTALL)
+        p = re.compile(r'<h2>GIMP for Windows</h2>.*?<a[^>]*>Download GIMP ([\d\.]+)</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
         version = result.group(1)
         title = 'GIMPForWindows' + version
@@ -35,7 +36,6 @@ class GIMPForWindowsData(FeedUpdateData):
         self.__updateExist = True
         self.__title = title
         self.__url = self.__class__.getCheckUrl()
-
 
     def updateExist(self):
         return self.__updateExist
@@ -52,8 +52,12 @@ class GIMPForWindowsData(FeedUpdateData):
     def getUpdated(self):
         return datetime.datetime.utcnow()
 
+    def isError(self):
+        return self.__isError
+
+
 def main():
-    FeedUpdate(__file__, 'http://gimp-win.sourceforge.net/').run()
+    return FeedUpdate(__file__, 'http://gimp-win.sourceforge.net/').run()
 
 
 if __name__ == '__main__':

@@ -5,15 +5,14 @@ from FeedUpdate import FeedUpdate, FeedUpdateData
 import re
 import datetime
 
-class Ruby18Data(FeedUpdateData):
+class FeedStatusData(FeedUpdateData):
     def getCheckUrl():
         return None
 
-    def __init__(self):
+    def __init__(self, errorList):
         super().__init__()
+        self.__errorList = errorList
         self.__updateExist = False
-        self.__title = ''
-        self.__url = ''
         self.__isError = False
 
     def setFeed(self, feed):
@@ -21,18 +20,23 @@ class Ruby18Data(FeedUpdateData):
 
     def setBody(self, body):
         super().setBody(body)
+        summary = self.getSummary()
+        entrys = super().getFeed().getEntry()
+        if (entrys[len(entrys)-1]['summary'] == summary):
+            return
+        self.__updateExist = True
 
     def updateExist(self):
         return self.__updateExist
 
     def getTitle(self):
-        return self.__title
+        return "feed status " + datetime.datetime.now().strftime('%Y%m%d%H%M')
 
     def getUrl(self):
-        return self.__url
+        return "http://feeds.click3.org/application/"
 
     def getSummary(self):
-        return ""
+        return str(self.__errorList)
 
     def getUpdated(self):
         return datetime.datetime.utcnow()
@@ -41,9 +45,9 @@ class Ruby18Data(FeedUpdateData):
         return self.__isError
 
 
-def main():
-    return FeedUpdate(__file__, 'http://www.ruby-lang.org/en/').run()
+def main(errorList):
+    return FeedUpdate(__file__, 'http://feeds.click3.org/application/', errorList).run()
 
 
 if __name__ == '__main__':
-    main()
+    main([])

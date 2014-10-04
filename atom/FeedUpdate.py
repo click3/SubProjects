@@ -53,14 +53,18 @@ class FeedUpdateData:
     def getContent(self):
         return None
 
+    def isError(self):
+        return True
+
+
 class FeedUpdate:
-    def __getData(self, filename):
+    def __getData(self, filename, *args):
         filename = os.path.basename(filename).split('.')[0]
         data_name = filename.split('_')[0] + 'Data'
-        return getattr(__import__(filename), data_name)()
+        return getattr(__import__(filename), data_name)(*args)
 
-    def __init__(self, filename, url):
-        data = self.__getData(filename)
+    def __init__(self, filename, url, *args):
+        data = self.__getData(filename, *args)
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         name = data.__class__.__name__.split('Data')[0]
         path = './' + name + '.atom'
@@ -92,17 +96,18 @@ class FeedUpdate:
             return None
         return response.readall().decode(charset)
 
-
     def run(self):
         url = self.__data.__class__.getCheckUrl()
         body = None
         if (url != None):
             body = FeedUpdate.__httpGet(url, self.__data.getCharset())
             if (body == None):
-                return
+                return False
         self.__data.setBody(body)
+        if (self.__data.isError()):
+            return False
         if (not self.__data.updateExist()):
-            return
+            return True
         entry = {}
         entry['title'] = self.__data.getTitle()
         entry['url'] = self.__data.getUrl()
@@ -120,27 +125,35 @@ class FeedUpdate:
         out.close()
         os.remove(self.__path)
         os.rename(tmpPath, self.__path)
+        return True
 
 
 class FeedUpdateThread(threading.Thread):
-    def __init__(self, path):
+    def __init__(self, path, errorList):
         super().__init__()
         self.__path = path
+        self.__errorList = errorList
 
     def run(self):
         moduleName = self.__path.split('.')[0]
-        getattr(__import__(moduleName), 'main')()
+        result = getattr(__import__(moduleName), 'main')()
+        if (result):
+            return
+        self.__errorList.append(moduleName)
 
 
 def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     threadList = []
+    errorList = []
     for path in glob.glob('*_feed.py'):
-        thread = FeedUpdateThread(path)
+        thread = FeedUpdateThread(path, errorList)
         thread.start()
         threadList.append(thread)
     for thread in threadList:
         thread.join()
+    errorList.sort()
+    getattr(__import__('FeedStatus'), 'main')(errorList)
     getattr(__import__('index'), 'main')()
 
 if __name__ == '__main__':

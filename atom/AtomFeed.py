@@ -8,6 +8,7 @@ import codecs
 from datetime import datetime
 import copy
 import types
+import uuid
 
 class AtomFeed:
     def __init__(self, title, url = None, feed_url = None, author = None):
@@ -178,7 +179,8 @@ class AtomFeed:
 
             title.appendChild(doc.createTextNode(entry['title']))
             link.setAttribute('href', entry['url'])
-            id.appendChild(doc.createTextNode(entry['url']))
+            idImpl = uuid.uuid3(uuid.NAMESPACE_URL, 'data:text/plain,' + entry['title'] + entry['url'])
+            id.appendChild(doc.createTextNode('urn:uuid:' + str(idImpl)))
             updated.appendChild(doc.createTextNode(entry['updated'].strftime('%Y-%m-%dT%H:%M:%SZ')))
 
             element.appendChild(title)
@@ -192,7 +194,10 @@ class AtomFeed:
                 element.appendChild(content)
             else:
                 summary = doc.createElement('summary')
-                summary.appendChild(doc.createTextNode(entry['summary']))
+                if ('summary' in entry and entry['summary']):
+                    summary.appendChild(doc.createTextNode(entry['summary']))
+                else:
+                    summary.appendChild(doc.createTextNode(entry['title']))
                 element.appendChild(summary)
             rootElement.appendChild(element)
 

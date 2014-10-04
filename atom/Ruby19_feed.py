@@ -7,13 +7,14 @@ import datetime
 
 class Ruby19Data(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.ruby-lang.org/ja/downloads/'
+        return 'https://www.ruby-lang.org/ja/downloads/'
 
     def __init__(self):
         super().__init__()
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -21,10 +22,10 @@ class Ruby19Data(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('ruby\s*([\.\d]+-p\d+)', re.DOTALL)
+        p = re.compile('Ruby\s*(1\.9\.[\d\.]+(?:-p\d+)?)', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
         version = result.group(1)
         title = 'Ruby' + version
@@ -35,7 +36,6 @@ class Ruby19Data(FeedUpdateData):
         self.__updateExist = True
         self.__title = title
         self.__url = self.__class__.getCheckUrl()
-
 
     def updateExist(self):
         return self.__updateExist
@@ -52,8 +52,12 @@ class Ruby19Data(FeedUpdateData):
     def getUpdated(self):
         return datetime.datetime.utcnow()
 
+    def isError(self):
+        return self.__isError
+
+
 def main():
-    FeedUpdate(__file__, 'http://www.ruby-lang.org/en/').run()
+    return FeedUpdate(__file__, 'https://www.ruby-lang.org/en/').run()
 
 
 if __name__ == '__main__':

@@ -7,13 +7,14 @@ import datetime
 
 class MinGWData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://sourceforge.net/projects/mingw/files/Installer/mingw-get-inst/'
+        return 'http://sourceforge.net/projects/mingw/files/Installer/mingw-get/'
 
     def __init__(self):
         super().__init__()
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -21,12 +22,13 @@ class MinGWData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('mingw-get-inst-(\d*)', re.DOTALL)
+        p = re.compile(r'<a [^>]*href="([^"]*/(mingw-get-([\d\.]+-(?:beta-)?[\d\-]+))/)"[^>]*>\s*\2\s*</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
-        version = result.group(1)
+        url = result.group(1)
+        version = result.group(3)
         title = 'MinGW' + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
@@ -34,8 +36,7 @@ class MinGWData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://sourceforge.net/projects/mingw/files/Installer/mingw-get-inst/mingw-get-inst-' + version
-
+        self.__url = self.__class__.getCheckUrl()
 
     def updateExist(self):
         return self.__updateExist
@@ -52,8 +53,12 @@ class MinGWData(FeedUpdateData):
     def getUpdated(self):
         return datetime.datetime.utcnow()
 
+    def isError(self):
+        return self.__isError
+
+
 def main():
-    FeedUpdate(__file__, 'http://sourceforge.net/projects/mingw/').run()
+    return FeedUpdate(__file__, 'http://sourceforge.net/projects/mingw/').run()
 
 
 if __name__ == '__main__':

@@ -5,9 +5,9 @@ from FeedUpdate import FeedUpdate, FeedUpdateData
 import re
 import datetime
 
-class PerlData(FeedUpdateData):
+class Ruby20Data(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.perl.org/get.html'
+        return 'https://www.ruby-lang.org/ja/downloads/'
 
     def __init__(self):
         super().__init__()
@@ -22,15 +22,16 @@ class PerlData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('currently\s*(\d(?:\.?\d)+)', re.DOTALL)
+        p = re.compile('Ruby\s*(2\.0\.[\d\.]+(?:-p\d+)?)', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
             return
         version = result.group(1)
-        title = self.__class__.__name__.split("Data")[0] + version
+        title = 'Ruby' + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
+            self.__updateExist = False
             return
         self.__updateExist = True
         self.__title = title
@@ -56,7 +57,7 @@ class PerlData(FeedUpdateData):
 
 
 def main():
-    return FeedUpdate(__file__, 'http://www.perl.org/').run()
+    return FeedUpdate(__file__, 'https://www.ruby-lang.org/en/').run()
 
 
 if __name__ == '__main__':

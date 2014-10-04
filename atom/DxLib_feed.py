@@ -14,6 +14,7 @@ class DxLibData(FeedUpdateData):
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -24,18 +25,16 @@ class DxLibData(FeedUpdateData):
         p = re.compile('Ver\s*([\d\.]+[a-z]?)', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
         version = result.group(1)
         title = self.__class__.__name__.split("Data")[0] + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
-            self.__updateExist = False
             return
         self.__updateExist = True
         self.__title = title
         self.__url = 'http://homepage2.nifty.com/natupaji/DxLib/dxlog.html'
-
 
     def updateExist(self):
         return self.__updateExist
@@ -55,8 +54,12 @@ class DxLibData(FeedUpdateData):
     def getCharset(self):
         return 'shift_jis'
 
+    def isError(self):
+        return self.__isError
+
+
 def main():
-    FeedUpdate(__file__, 'http://homepage2.nifty.com/natupaji/DxLib/').run()
+    return FeedUpdate(__file__, 'http://homepage2.nifty.com/natupaji/DxLib/').run()
 
 
 if __name__ == '__main__':

@@ -7,13 +7,14 @@ import datetime
 
 class Python3Data(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.python.org/download/'
+        return 'https://www.python.org/download/'
 
     def __init__(self):
         super().__init__()
         self.__updateExist = False
         self.__title = ''
         self.__url = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -24,7 +25,7 @@ class Python3Data(FeedUpdateData):
         p = re.compile('Python\s*(3.[\d.]+)', re.DOTALL)
         result = p.search(body)
         if (result == None):
-            self.__updateExist = False
+            self.__isError = True
             return
         version = result.group(1)
         title = "Python" + version
@@ -34,8 +35,7 @@ class Python3Data(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://www.python.org/download/releases/' + version + '/'
-
+        self.__url = 'https://www.python.org/download/releases/' + version + '/'
 
     def updateExist(self):
         return self.__updateExist
@@ -52,8 +52,12 @@ class Python3Data(FeedUpdateData):
     def getUpdated(self):
         return datetime.datetime.utcnow()
 
+    def isError(self):
+        return self.__isError
+
+
 def main():
-    FeedUpdate(__file__, 'http://www.python.org/').run()
+    return FeedUpdate(__file__, 'https://www.python.org/').run()
 
 
 if __name__ == '__main__':
