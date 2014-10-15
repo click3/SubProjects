@@ -10,7 +10,7 @@ import datetime
 
 class FirefoxData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.mozilla.jp/firefox/releases/'
+        return 'https://www.mozilla.org/en-US/firefox/releases/'
 
     def __init__(self):
         super().__init__()
@@ -25,7 +25,7 @@ class FirefoxData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile(r'<li><a href="/firefox/([\d\.]+)/releasenotes/">\1[^<]*</a></li>[^<]*</ul>', re.DOTALL)
+        p = re.compile(r'<a href="\.\./([\d\.]+)/releasenotes/">\1</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -37,7 +37,7 @@ class FirefoxData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://www.mozilla.jp/firefox/' + version + '/releasenotes/'
+        self.__url = 'https://www.mozilla.org/en-US/firefox/' + version + '/releasenotes/'
 
     def updateExist(self):
         return self.__updateExist
