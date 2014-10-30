@@ -7,7 +7,7 @@ import datetime
 
 class HaskellPlatformForWindowsData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.haskell.org/platform/windows.html'
+        return 'https://www.haskell.org/platform/windows.html'
 
     def __init__(self):
         super().__init__()

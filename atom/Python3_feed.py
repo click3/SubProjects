@@ -7,7 +7,7 @@ import datetime
 
 class Python3Data(FeedUpdateData):
     def getCheckUrl():
-        return 'https://www.python.org/download/'
+        return 'https://www.python.org/downloads/'
 
     def __init__(self):
         super().__init__()
