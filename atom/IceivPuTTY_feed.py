@@ -38,7 +38,7 @@ class IceivPuTTYData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://ice.hotmint.com/putty/' + filename
+        self.__url = self.__class__.getCheckUrl()
 
     def updateExist(self):
         return self.__updateExist
