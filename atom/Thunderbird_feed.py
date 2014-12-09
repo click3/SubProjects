@@ -10,7 +10,7 @@ import datetime
 
 class ThunderbirdData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.mozilla.jp/thunderbird/'
+        return 'https://www.mozilla.org/en-US/thunderbird/'
 
     def __init__(self):
         super().__init__()
@@ -25,7 +25,8 @@ class ThunderbirdData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('<a href="/thunderbird/(.*?)/releasenotes/">リリースノート</a>')
+        body = re.sub('\\\\', '', body)
+        p = re.compile('<a .[^>]*href="/en-US/thunderbird/(.*?)/releasenotes/">')
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -37,7 +38,7 @@ class ThunderbirdData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://www.mozilla.jp/thunderbird/' + version + '/releasenotes/'
+        self.__url = 'https://www.mozilla.org/en-US/thunderbird/' + version + '/releasenotes/'
 
     def updateExist(self):
         return self.__updateExist
@@ -59,7 +60,7 @@ class ThunderbirdData(FeedUpdateData):
 
 
 def main():
-    return FeedUpdate(__file__, 'http://www.mozilla.jp/thunderbird/').run()
+    return FeedUpdate(__file__, 'https://www.mozilla.org/thunderbird/').run()
 
 
 if __name__ == '__main__':
