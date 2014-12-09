@@ -69,8 +69,8 @@ class FeedUpdate:
         name = data.__class__.__name__.split('Data')[0]
         path = './' + name + '.atom'
         if (not os.path.exists(path) or os.path.getsize(path) == 0):
-            feed = AtomFeed(name, url, 'http://sweetie089.no-ip.biz/atom/' + name + '.atom', ['sweetie'])
-            feed.appendEntry({'title':'feed_create', 'url':'http://sweetie089.no-ip.biz/atom/' + name + '.atom', 'updated':datetime.datetime.utcnow(), 'summary':''})
+            feed = AtomFeed(name, url, 'http://feeds.click3.org/application/' + name + '.atom', ['sweetie'])
+            feed.appendEntry({'title':'feed_create', 'url':'http://feeds.click3.org/application/' + name + '.atom', 'updated':datetime.datetime.utcnow(), 'summary':''})
             xml = feed.toXml().decode('utf-8')
             out = codecs.open(path, 'w', 'utf-8')
             out.write(xml)
