@@ -22,7 +22,7 @@ class AndroidSDKData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile(r'<a [^>]*href="([^"]+(adt-bundle-windows-x86_64-(\d{8})\.zip))"[^>]*>\2</a>', re.DOTALL)
+        p = re.compile(r'<a [^>]*href="([^"]+(android-studio-ide-([\d\.]+)-windows\.zip))"[^>]*>\2</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -30,6 +30,7 @@ class AndroidSDKData(FeedUpdateData):
         url = result.group(1)
         version = result.group(3)
         title = self.__class__.__name__.split("Data")[0] + version
+        print("{0}\n{1}\n{2}\n".format(url, version, title))
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
             return
