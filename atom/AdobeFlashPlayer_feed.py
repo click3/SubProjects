@@ -10,7 +10,7 @@ import datetime
 
 class AdobeFlashPlayerData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.adobe.com/jp/software/flash/about/'
+        return 'http://www.adobe.com/software/flash/about/'
 
     def __init__(self):
         super().__init__()
@@ -37,7 +37,7 @@ class AdobeFlashPlayerData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://www.adobe.com/jp/software/flash/about/'
+        self.__url = 'http://www.adobe.com/software/flash/about/'
 
     def updateExist(self):
         return self.__updateExist
@@ -58,7 +58,7 @@ class AdobeFlashPlayerData(FeedUpdateData):
         return self.__isError
 
 def main():
-    return FeedUpdate(__file__, 'http://www.adobe.com/jp/software/flash/about/').run()
+    return FeedUpdate(__file__, 'http://www.adobe.com/software/flash/about/').run()
 
 
 if __name__ == '__main__':
