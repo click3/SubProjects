@@ -34,7 +34,7 @@ class Python2Data(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'https://www.python.org/download/releases/' + version + '/'
+        self.__url = 'https://hg.python.org/cpython/raw-file/v' + version + '/Misc/NEWS'
 
     def updateExist(self):
         return self.__updateExist
