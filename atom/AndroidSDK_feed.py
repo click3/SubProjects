@@ -30,7 +30,6 @@ class AndroidSDKData(FeedUpdateData):
         url = result.group(1)
         version = result.group(3)
         title = self.__class__.__name__.split("Data")[0] + version
-        print("{0}\n{1}\n{2}\n".format(url, version, title))
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):
             return
