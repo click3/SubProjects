@@ -137,10 +137,8 @@ class FeedUpdateThread(threading.Thread):
     def run(self):
         moduleName = self.__path.split('.')[0]
         result = getattr(__import__(moduleName), 'main')()
-        if (result):
-            return
-        self.__errorList.append(moduleName)
-
+        if (result == None or result == False):
+            self.__errorList.append(moduleName)
 
 def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

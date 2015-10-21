@@ -22,7 +22,7 @@ class GIMPForWindowsData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile(r'<h2>GIMP for Windows</h2>.*?<a[^>]*>Download GIMP ([\d\.]+)</a>', re.DOTALL)
+        p = re.compile(r'<h2>GIMP for Windows</h2>.*?<div[^>]*>Download GIMP ((?:\d+\.?)+)<br(?: /)?>\s*directly</div>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True

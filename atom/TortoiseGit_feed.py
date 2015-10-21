@@ -10,7 +10,7 @@ import datetime
 
 class TortoiseGitData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://code.google.com/p/tortoisegit/wiki/ReleaseNotes'
+        return 'https://tortoisegit.org/'
 
     def __init__(self):
         super().__init__()
@@ -25,7 +25,7 @@ class TortoiseGitData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('<h1><a name="Release_(.*?)">')
+        p = re.compile(r'<a href="/download/">Stable:\s*((?:\d+\.?)+)</a>')
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -37,7 +37,7 @@ class TortoiseGitData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://code.google.com/p/tortoisegit/wiki/ReleaseNotes#Release_' + version
+        self.__url = 'https://tortoisegit.org/docs/releasenotes/#Release_' + version
 
     def updateExist(self):
         return self.__updateExist

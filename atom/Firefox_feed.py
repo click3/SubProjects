@@ -7,6 +7,7 @@ import os
 from AtomFeed import AtomFeed
 import codecs
 import datetime
+from distutils.version import LooseVersion
 
 class FirefoxData(FeedUpdateData):
     def getCheckUrl():
@@ -26,11 +27,12 @@ class FirefoxData(FeedUpdateData):
         super().setBody(body)
         assert(isinstance(body, str))
         p = re.compile(r'<a href="\.\./([\d\.]+)/releasenotes/">\1</a>', re.DOTALL)
-        result = p.search(body)
-        if (result == None):
+        versionList = p.findall(body)
+        if (not versionList):
             self.__isError = True
             return
-        version = result.group(1)
+        versionList = sorted(versionList, key=lambda x: LooseVersion(x))
+        version = versionList[-1]
         title = 'Firefox' + version
         entrys = super().getFeed().getEntry()
         if (entrys[len(entrys)-1]['title'] == title):

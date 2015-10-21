@@ -19,6 +19,7 @@ class indexData(FeedUpdateData):
         self.__title = ''
         self.__url = ''
         self.__content = ''
+        self.__isError = False
 
     def setFeed(self, feed):
         super().setFeed(feed)
@@ -51,6 +52,9 @@ class indexData(FeedUpdateData):
         indexData.__outHtml(outPath, feedList)
 
         diff = set(feedList) - set(beforeFeedList)
+        if (len(diff) == 0):
+            self.__isError = True
+            return
         title = 'AddFeed(%d)' % len(diff)
         contentImpl = ''
         for feed in diff:
@@ -109,8 +113,11 @@ class indexData(FeedUpdateData):
         f.close()
         os.chmod(outPath, stat.S_IROTH | stat.S_IWOTH | stat.S_IRGRP | stat.S_IWGRP | stat.S_IRUSR | stat.S_IWUSR | stat.S_IREAD | stat.S_IWRITE)
 
+    def isError(self):
+        return self.__isError
+
 def main():
-    FeedUpdate(__file__, 'http://feeds.click3.org/application/').run()
+    return FeedUpdate(__file__, 'http://feeds.click3.org/application/').run()
 
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ class ThunderbirdData(FeedUpdateData):
         super().setBody(body)
         assert(isinstance(body, str))
         body = re.sub('\\\\', '', body)
-        p = re.compile('<a .[^>]*href="/en-US/thunderbird/(.*?)/releasenotes/">')
+        p = re.compile(r'<a .[^>]*href="https://download.mozilla.org/\?product=thunderbird-((?:\d+\.?)+)&amp;os=win&amp;lang=en-US"[^>]*>')
         result = p.search(body)
         if (result == None):
             self.__isError = True

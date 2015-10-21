@@ -10,7 +10,7 @@ import datetime
 
 class msysGitData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://msysgit.github.io/'
+        return 'https://git-for-windows.github.io/'
 
     def __init__(self):
         super().__init__()
@@ -25,7 +25,7 @@ class msysGitData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile(r'<a [^>]*href="([^"]+/Git-([\d\.]+-?(?:preview)?-?\d*)\.exe)"[^>]*>Download</a>', re.DOTALL)
+        p = re.compile(r'<a[^>]*href="(https?://[^"]*)"[^>]*>Version ((?:\d+\.?)+)</a>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True

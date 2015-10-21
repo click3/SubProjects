@@ -7,7 +7,7 @@ import datetime
 
 class PerlData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://www.perl.org/get.html'
+        return 'https://www.perl.org/get.html'
 
     def __init__(self):
         super().__init__()
@@ -22,7 +22,7 @@ class PerlData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('currently\s*(\d(?:\.?\d)+)', re.DOTALL)
+        p = re.compile(r'Download Latest Stable Source \(((?:\d+\.?)+)\)', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -56,7 +56,7 @@ class PerlData(FeedUpdateData):
 
 
 def main():
-    return FeedUpdate(__file__, 'http://www.perl.org/').run()
+    return FeedUpdate(__file__, 'https://www.perl.org/').run()
 
 
 if __name__ == '__main__':

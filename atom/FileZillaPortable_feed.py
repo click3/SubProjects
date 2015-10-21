@@ -5,9 +5,9 @@ from FeedUpdate import FeedUpdate, FeedUpdateData
 import re
 import datetime
 
-class IJGLibData(FeedUpdateData):
+class FileZillaPortableData(FeedUpdateData):
     def getCheckUrl():
-        return 'http://ijg.org/'
+        return 'http://portableapps.com/apps/internet/filezilla_portable'
 
     def __init__(self):
         super().__init__()
@@ -22,7 +22,7 @@ class IJGLibData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile('release\s*([\d\.]+[a-z]?)', re.DOTALL)
+        p = re.compile(r'<strong>Version ((?:\d+\.?)+)</strong>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -56,7 +56,7 @@ class IJGLibData(FeedUpdateData):
 
 
 def main():
-    return FeedUpdate(__file__, 'http://ijg.org/').run()
+    return FeedUpdate(__file__, 'http://portableapps.com/apps/internet/filezilla_portable').run()
 
 
 if __name__ == '__main__':

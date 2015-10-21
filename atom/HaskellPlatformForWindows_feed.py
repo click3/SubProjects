@@ -22,7 +22,7 @@ class HaskellPlatformForWindowsData(FeedUpdateData):
     def setBody(self, body):
         super().setBody(body)
         assert(isinstance(body, str))
-        p = re.compile(r'<a [^>]*href="(download/([\d\.]+)/[^"]*)"[^>]*>Haskell Platform \2 for Windows[^<]*</a>', re.DOTALL)
+        p = re.compile(r'<a [^>]*href="(//haskell.org/platform/download/[^/]+/HaskellPlatform-((?:[\d]+\.?)+(?:-\w+))-i386-setup\.exe)"[^>]*>', re.DOTALL)
         result = p.search(body)
         if (result == None):
             self.__isError = True
@@ -35,7 +35,7 @@ class HaskellPlatformForWindowsData(FeedUpdateData):
             return
         self.__updateExist = True
         self.__title = title
-        self.__url = 'http://www.haskell.org/platform/' + url
+        self.__url = 'https:' + url
 
     def updateExist(self):
         return self.__updateExist
